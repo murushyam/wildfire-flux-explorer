@@ -1,0 +1,11 @@
+name: check
+on: [push, pull_request]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: for f in js/*.js; do node --check "$f"; done
+      - run: python3 -c "import json; d=json.load(open('data/sites.json')); json.load(open('data/sites.schema.json')); assert all(set(s['values'])>={'pre','during','post'} for s in d['sites'])"
