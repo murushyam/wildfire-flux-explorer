@@ -20,15 +20,18 @@
     <select id="site"></select>
     <span id="badge" class="badge">EXAMPLE DATA</span>
   </header>
+  <div id="phaseVar"></div>
+  <div id="warn" class="warn">⚠ EXAMPLE placeholder values — not observations or published results</div>
   <div id="timeline"></div>
   <div id="vars"></div>
+  <button id="explodeBtn">Explode / collapse layers (E)</button>
   <canvas id="chart" width="300" height="140"></canvas>
   <p id="note"></p>
 </div>
 <div id="cam">
   <video id="video" playsinline muted></video>
   <button id="camBtn">Enable hand tracking</button>
-  <p id="gesture">Mouse: drag = orbit, wheel = zoom, ←/→ = phase, space = pause, 1–6 = variable</p>
+  <p id="gesture">Mouse: drag = orbit, wheel or +/- = zoom, ←/→ = phase, 1–6 = variable, E = explode, S = site, C = camera, space = pause</p>
   <small>Camera frames are processed locally in your browser; nothing is uploaded.</small>
 </div>
 <script type="module" src="js/main.js"></script>

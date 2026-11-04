@@ -20,7 +20,9 @@ export function buildSite(world, site) {
   const p = geo.attributes.position;
   for (let i = 0; i < p.count; i++) p.setY(i, H(p.getX(i), p.getZ(i), off, relief));
   geo.computeVertexNormals();
-  world.terrain = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0x3b5d2a, flatShading: true }));
+  geo.setAttribute('color', new THREE.Float32BufferAttribute(new Float32Array(p.count * 3), 3));
+  world.terrain = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true }));
+  world.burn = site.burn_zone || { x: 0, z: 0, r: 4 }; world.H = (x, z) => H(x, z, off, relief);
   world.group.add(world.terrain);
   const N = Math.round(1500 * (site.forest_density ?? 0.8));
   const tree = new THREE.ConeGeometry(0.15, 0.6, 5); tree.translate(0, 0.3, 0);
@@ -31,6 +33,17 @@ export function buildSite(world, site) {
     m.makeScale(s, s, s).setPosition(x, y, z); world.trees.setMatrixAt(i, m); world.treePos.push([x, y, z]);
   }
   world.group.add(world.trees);
+  // Atmosphere layers (explode/collapse stack)
+  world.layers = ['Surface layer', 'Boundary layer', 'Free troposphere'].map((n, i) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(20, 0.04, 20), new THREE.MeshBasicMaterial({ color: [0x66ccff, 0x8899ff, 0xbb99ff][i], transparent: true, opacity: 0.12, depthWrite: false }));
+    m.userData.base = 3.5 + i * 2.5; m.position.y = m.userData.base; m.name = n; world.group.add(m); return m;
+  });
+  // Flux arrow grid
+  world.arrows = [];
+  for (let x = -8; x <= 8; x += 4) for (let z = -8; z <= 8; z += 4) {
+    const a = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x, H(x, z, off, relief) + 0.8, z), 1, 0xffffff, 0.35, 0.22);
+    a.userData.base = a.position.y; world.group.add(a); world.arrows.push(a);
+  }
   world.systems = {
     fire: particles(world, 1500, 0xff5a1f, 0.12),
     smoke: particles(world, 2500, 0x8a8a8a, 0.25, 0.35),
@@ -66,4 +79,30 @@ function move(world, s, vy, top, drift = 0) {
     if (p[i * 3 + 1] > top + 3 || p[i * 3 + 1] < -3 + base) seed(world, p, i);
   }
   s.geometry.attributes.position.needsUpdate = true;
+}
+
+// Phase-dependent terrain colours: green -> embers in burn zone (during) -> charred (post).
+export function colorTerrain(world, phase) {
+  const g = world.terrain.geometry, p = g.attributes.position, col = g.attributes.color, b = world.burn;
+  const c = new THREE.Color(), green = new THREE.Color(0x3b5d2a), burnt = new THREE.Color(0x2b1d14), ember = new THREE.Color(0xff4500);
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i), z = p.getZ(i), inside = Math.hypot(x - b.x, z - b.z) < b.r + Math.sin(x * 1.3 + z) * 0.6;
+    c.copy(green).offsetHSL(0, 0, p.getY(i) * 0.03);
+    if (inside && phase === 'during') c.lerpColors(burnt, ember, 0.3 + Math.random() * 0.5);
+    else if (inside && phase === 'post') c.copy(burnt);
+    col.setXYZ(i, c.r, c.g, c.b);
+  }
+  col.needsUpdate = true;
+  if (world.trees) world.trees.visible = true;
+}
+// Arrow grid: length ~ normalized magnitude s (0..1), direction from variable meta, colour per variable.
+export function setArrows(world, s, dir, color) {
+  const v = new THREE.Vector3(0, dir === 'down' ? -1 : 1, 0), c = new THREE.Color(color || '#ffffff');
+  world.arrows.forEach(a => { a.setDirection(v); a.setLength(0.3 + 2.5 * s, 0.35, 0.22); a.setColor(c);
+    a.position.y = a.userData.base + (dir === 'down' ? 0.3 + 2.5 * s : 0); });
+}
+// Explode factor e (0..1) lifts the layers apart and drops the terrain.
+export function applyExplode(world, e) {
+  world.layers?.forEach((m, i) => { m.position.y = m.userData.base + e * (i + 1) * 2.5; m.material.opacity = 0.12 + e * 0.13; });
+  world.terrain.position.y = world.trees.position.y = -e * 2;
 }

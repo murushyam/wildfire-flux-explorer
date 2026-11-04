@@ -16,10 +16,22 @@ Inspired by [takeapart.app](https://takeapart.app). Built for exploring pre-fire
   | Open palm, fast horizontal swipe | Switch phase Pre / During / Post fire |
   | Pinch (thumb–index), open/close | Zoom in / out |
   | Point (index only), left↔right | Select flux variable |
+  | Open palm held still ~1 s | Explode / collapse the atmosphere layer stack (surface, boundary layer, free troposphere) |
   | Fist | Pause / resume particles |
-- **Mouse/touch/keyboard fallback**: drag = orbit, wheel/pinch = zoom, ←/→ = phase, space = pause, 1–6 = variable; HUD buttons for everything.
+- **Mouse/touch/keyboard fallback** (HUD buttons for everything):
+  | Action | Mouse / keyboard |
+  |---|---|
+  | Orbit | drag |
+  | Zoom | wheel / touch pinch, `+` / `-` |
+  | Phase | `←` / `→`, timeline buttons |
+  | Variable | `1`–`6`, variable buttons |
+  | Explode / collapse layers | `E`, *Explode* button |
+  | Next site | `S`, site selector |
+  | Start hand tracking | `C`, *Enable hand tracking* |
+  | Pause particles | space |
 - **Visuals**: procedural terrain + instanced forest per site; particle systems for fire (during phase, scaled by SH), smoke (density ∝ AOD), upward flux particles (LH/ET/SH) and downward carbon uptake (GPP).
-- **HUD**: site selector, phase timeline, variable panel, bar chart across phases, published findings with sources.
+- **Layers & arrows**: explodable atmosphere stack; flux-arrow grid whose length (normalized across sites/phases), direction (`direction`) and colour (`color`) follow the selected variable and phase; terrain recolours by phase inside the site's `burn_zone` (green → embers → charred).
+- **HUD**: phase · variable line, EXAMPLE-data warning, site selector, phase timeline, variable panel, bar chart across phases, published findings with sources.
 - See [docs/CONCEPT.md](docs/CONCEPT.md).
 
 ## Variables and units
@@ -58,14 +70,14 @@ Click *Enable hand tracking* and allow camera access. Hand tracking runs locally
 `data/sites.json` (schema: `data/sites.schema.json`):
 ```json
 { "is_example": false,
-  "variables": { "SH": {"label": "Sensible heat flux", "unit": "W m-2", "direction": "up"} },
+  "variables": { "SH": {"label": "Sensible heat flux", "unit": "W m-2", "direction": "up", "color": "#ffd23f"} },
   "phases": ["pre", "during", "post"],
   "sites": [{ "id": "similipal", "name": "...", "lat": 21.9, "lon": 86.3, "event": "...", "source": "MODIS/ERA5/CAMS, window ...",
-              "relief": 0.8, "forest_density": 0.9,
+              "relief": 0.8, "forest_density": 0.9, "burn_zone": {"x": 1.5, "z": -1, "r": 5},
               "values": { "pre": {"GPP": 0, "ET": 0, "LH": 0, "SH": 0, "VPD": 0, "AOD": 0}, "during": {}, "post": {} },
               "published_findings": [{"text": "...", "source": "doi"}] }] }
 ```
-Suggested sources (site-mean over the burnt polygon, per phase window): GPP — MODIS MOD17A2H; ET — MOD16A2; SH/LH — ERA5-Land (`surface_sensible/latent_heat_flux`, convert J m⁻² → W m⁻²); VPD — from ERA5 2 m T and dewpoint; AOD — MODIS MCD19A2 (MAIAC) or CAMS. Set `is_example: false` to hide the EXAMPLE badge.
+Suggested sources (site-mean over the burnt polygon, per phase window): GPP — MODIS MOD17A2H; ET — MOD16A2; SH/LH — ERA5-Land (`surface_sensible/latent_heat_flux`, convert J m⁻² → W m⁻²); VPD — from ERA5 2 m T and dewpoint; AOD — MODIS MCD19A2 (MAIAC) or CAMS. Set `is_example: false` to hide the EXAMPLE badge and warning. `burn_zone` (scene units, terrain spans −10..10) is a visual EXAMPLE footprint, not a mapped burnt area; `color` is optional.
 
 ## Portfolio Use
 

@@ -1,10 +1,10 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-import { makeWorld, buildSite, updateSystems } from './scene.js';
+import { makeWorld, buildSite, updateSystems, colorTerrain, setArrows, applyExplode } from './scene.js';
 import { classify, Swipe } from './gestures.js';
 
 const PHASES = ['pre', 'during', 'post'], PLABEL = { pre: 'Pre-fire', during: 'During fire', post: 'Post-fire' };
-const state = { site: 0, phase: 0, variable: 'SH', paused: false, data: null };
+const state = { site: 0, phase: 0, variable: 'SH', paused: false, data: null, explode: 0, explodeTarget: 0 };
 const $ = id => document.getElementById(id);
 
 const renderer = new THREE.WebGLRenderer({ canvas: $('scene'), antialias: true });
@@ -35,6 +35,11 @@ function renderHUD() {
   const pub = (s.published_findings || []).map(f => `• ${f.text} <i>(${f.source})</i>`).join('<br>');
   $('note').innerHTML = `<b>${s.name}</b> — ${s.event || ''}<br>${meta.label} [${meta.unit}] = ${vals()[state.variable]}${state.data.is_example ? ' (example)' : ''}${state.paused ? ' ⏸' : ''}${pub ? '<br><br>Published findings:<br>' + pub : ''}`;
   $('badge').style.display = state.data.is_example ? '' : 'none';
+  $('warn').style.display = state.data.is_example ? '' : 'none';
+  $('phaseVar').textContent = `${PLABEL[PHASES[state.phase]]} · ${meta.label}${state.explodeTarget ? ' · exploded' : ''}`;
+  colorTerrain(world, PHASES[state.phase]);
+  const [a, b] = range(state.variable), x = vals()[state.variable];
+  setArrows(world, b > a ? (x - a) / (b - a) : 0.5, meta.direction, meta.color);
   drawChart();
 }
 function drawChart() {
@@ -48,6 +53,8 @@ function drawChart() {
 function setSite(i) { state.site = i; buildSite(world, site()); renderHUD(); }
 function setPhase(i) { state.phase = (i + 3) % 3; renderHUD(); }
 function setVar(k) { state.variable = k; renderHUD(); }
+function toggleExplode(v) { state.explodeTarget = v ?? (state.explodeTarget ? 0 : 1); renderHUD(); }
+$('explodeBtn').onclick = () => toggleExplode();
 const varKeys = () => Object.keys(state.data.variables);
 
 $('timeline').onclick = e => e.target.dataset.p && setPhase(+e.target.dataset.p);
@@ -56,11 +63,15 @@ $('site').onchange = e => setSite(+e.target.value);
 addEventListener('keydown', e => {
   if (e.key === 'ArrowRight') setPhase(state.phase + 1); else if (e.key === 'ArrowLeft') setPhase(state.phase - 1);
   else if (e.key === ' ') { state.paused = !state.paused; renderHUD(); }
+  else if (e.key === 'e' || e.key === 'E') toggleExplode();
+  else if (e.key === '+' || e.key === '=') zoomBy(0.05); else if (e.key === '-' || e.key === '_') zoomBy(-0.05);
+  else if (e.key === 's' || e.key === 'S') { setSite((state.site + 1) % state.data.sites.length); $('site').value = state.site; }
+  else if (e.key === 'c' || e.key === 'C') $('camBtn').click();
   else if (/^[1-9]$/.test(e.key) && varKeys()[+e.key - 1]) setVar(varKeys()[+e.key - 1]);
 });
 
 // ---- Hand tracking (MediaPipe Tasks Vision, loaded lazily on user click) ----
-const swipe = new Swipe(); let landmarker, lastOpen = null, lastPinch = null, lastPointT = 0;
+const swipe = new Swipe(); let landmarker, holdStart = null, lastOpen = null, lastPinch = null, lastPointT = 0;
 $('camBtn').onclick = async () => {
   $('camBtn').disabled = true; $('gesture').textContent = 'Loading hand model…';
   try {
@@ -81,8 +92,11 @@ function handFrame(t) {
   if (g.name === 'open') {
     const dir = swipe.push(g.x, t); if (dir) setPhase(state.phase + dir);
     if (lastOpen) { orbitBy(g.x - lastOpen.x, g.y - lastOpen.y); }
+    // Open palm held still ~1 s toggles explode/collapse of the layer stack
+    if (!holdStart || Math.hypot(g.x - holdStart.x, g.y - holdStart.y) > 0.04) holdStart = { x: g.x, y: g.y, t };
+    else if (t - holdStart.t > 1000) { toggleExplode(); holdStart = { x: g.x, y: g.y, t: t + 2000 }; }
     lastOpen = g;
-  } else lastOpen = null;
+  } else { lastOpen = null; holdStart = null; }
   if (g.name === 'pinch') { if (lastPinch != null) zoomBy(g.pinch - lastPinch); lastPinch = g.pinch; } else lastPinch = null;
   if (g.name === 'fist' && !state.fist) { state.paused = !state.paused; renderHUD(); }
   state.fist = g.name === 'fist';
@@ -99,6 +113,7 @@ function loop(t) {
   requestAnimationFrame(loop); const dt = Math.min(0.05, (t - prev) / 1000); prev = t;
   try { handFrame(t); } catch (e) { console.warn(e); }
   if (!state.paused && state.data) updateSystems(world, intensities(), dt);
+  state.explode += (state.explodeTarget - state.explode) * 0.08; if (world.layers) applyExplode(world, state.explode);
   controls.update(); renderer.render(scene, camera);
 }
 

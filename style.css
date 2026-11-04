@@ -11,3 +11,6 @@ select,button{background:#161b22;color:#e6edf3;border:1px solid #30363d;border-r
 #video{width:100%;transform:scaleX(-1);border-radius:6px;display:none}
 #gesture{font-size:12px;margin:6px 0}
 small{color:#8b949e}
+#phaseVar{font-weight:600;margin:4px 0}
+.warn{color:#ffb347;font-size:12px;margin:4px 0}
+#explodeBtn{margin:4px 0}
