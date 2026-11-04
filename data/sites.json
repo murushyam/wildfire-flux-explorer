@@ -1,0 +1,167 @@
+{
+ "_notice": "ALL NUMBERS BELOW ARE EXAMPLE PLACEHOLDERS for UI development. They are NOT observations or published results. Replace with real MODIS / ERA5 / CAMS values (see README > Data schema).",
+ "is_example": true,
+ "variables": {
+  "GPP": {
+   "label": "Gross Primary Productivity",
+   "unit": "gC m-2 d-1",
+   "direction": "down"
+  },
+  "ET": {
+   "label": "Evapotranspiration",
+   "unit": "mm d-1",
+   "direction": "up"
+  },
+  "LH": {
+   "label": "Latent heat flux",
+   "unit": "W m-2",
+   "direction": "up"
+  },
+  "SH": {
+   "label": "Sensible heat flux",
+   "unit": "W m-2",
+   "direction": "up"
+  },
+  "VPD": {
+   "label": "Vapour pressure deficit",
+   "unit": "kPa",
+   "direction": "none"
+  },
+  "AOD": {
+   "label": "Aerosol optical depth (550 nm)",
+   "unit": "-",
+   "direction": "none"
+  }
+ },
+ "phases": [
+  "pre",
+  "during",
+  "post"
+ ],
+ "sites": [
+  {
+   "id": "similipal",
+   "name": "Similipal BR, Odisha",
+   "lat": 21.9,
+   "lon": 86.3,
+   "event": "Similipal wildfire, March-April 2021 (PCE 2025 analyses 25-29 Apr 2021 event)",
+   "relief": 0.8,
+   "forest_density": 0.9,
+   "values": {
+    "pre": {
+     "GPP": 5,
+     "ET": 3,
+     "LH": 90,
+     "SH": 60,
+     "VPD": 2,
+     "AOD": 0.4
+    },
+    "during": {
+     "GPP": 3,
+     "ET": 2,
+     "LH": 60,
+     "SH": 100,
+     "VPD": 4,
+     "AOD": 1.2
+    },
+    "post": {
+     "GPP": 4,
+     "ET": 2.5,
+     "LH": 75,
+     "SH": 75,
+     "VPD": 3,
+     "AOD": 0.6
+    }
+   },
+   "source": "EXAMPLE placeholder values - not observations",
+   "published_findings": [
+    {
+     "text": "Fire vs non-fire: SH up ~32.7 W m-2 (peak ~145 W m-2); LH down ~33%; net solar radiation up ~58.14%; LST up ~5 C; VPD peak ~5.1 kPa; ET down 53.3% pre->post; AOD >3x",
+     "source": "Shyam Sunder M.S. et al., Phys. Chem. Earth 141 (2025) 104177, doi:10.1016/j.pce.2025.104177"
+    },
+    {
+     "text": "March 2021 episode: AOD +56.21%, PM2.5 +~12 ug m-3, burnt area ~674.21 km2 (18.8%), ~4500 fire events, CO2 ~0.41 Tg/yr",
+     "source": "Aerosol Air Qual. Res. 2022 (aaqr-22-02-ssea-0084)"
+    },
+    {
+     "text": "Multi-year Similipal fires (2004-2021): GPP and ET decline during fire, recover post-fire",
+     "source": "EGU24-106, doi:10.5194/egusphere-egu24-106"
+    }
+   ]
+  },
+  {
+   "id": "bandhavgarh",
+   "name": "Bandhavgarh, Madhya Pradesh",
+   "lat": 23.7,
+   "lon": 81.0,
+   "event": "example event",
+   "relief": 0.5,
+   "forest_density": 0.7,
+   "values": {
+    "pre": {
+     "GPP": 4,
+     "ET": 2.5,
+     "LH": 80,
+     "SH": 70,
+     "VPD": 2.5,
+     "AOD": 0.35
+    },
+    "during": {
+     "GPP": 2.5,
+     "ET": 1.8,
+     "LH": 55,
+     "SH": 105,
+     "VPD": 4.2,
+     "AOD": 0.9
+    },
+    "post": {
+     "GPP": 3.5,
+     "ET": 2.2,
+     "LH": 70,
+     "SH": 80,
+     "VPD": 3.2,
+     "AOD": 0.5
+    }
+   },
+   "source": "EXAMPLE placeholder values - not observations",
+   "published_findings": []
+  },
+  {
+   "id": "chamba",
+   "name": "Chamba, Himachal Pradesh",
+   "lat": 32.55,
+   "lon": 76.13,
+   "event": "example event",
+   "relief": 1.4,
+   "forest_density": 0.6,
+   "values": {
+    "pre": {
+     "GPP": 3.5,
+     "ET": 2,
+     "LH": 70,
+     "SH": 55,
+     "VPD": 1.5,
+     "AOD": 0.25
+    },
+    "during": {
+     "GPP": 2,
+     "ET": 1.4,
+     "LH": 45,
+     "SH": 90,
+     "VPD": 3,
+     "AOD": 0.8
+    },
+    "post": {
+     "GPP": 3,
+     "ET": 1.7,
+     "LH": 60,
+     "SH": 65,
+     "VPD": 2.2,
+     "AOD": 0.4
+    }
+   },
+   "source": "EXAMPLE placeholder values - not observations",
+   "published_findings": []
+  }
+ ]
+}

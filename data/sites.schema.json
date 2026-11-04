@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Wildfire Flux Explorer sites",
+  "type": "object",
+  "required": ["variables", "phases", "sites"],
+  "properties": {
+    "is_example": {"type": "boolean"},
+    "variables": {"type": "object", "additionalProperties": {"type": "object", "required": ["label", "unit"],
+      "properties": {"label": {"type": "string"}, "unit": {"type": "string"}, "direction": {"enum": ["up", "down", "none"]}}}},
+    "phases": {"type": "array", "items": {"enum": ["pre", "during", "post"]}},
+    "sites": {"type": "array", "items": {"type": "object", "required": ["id", "name", "lat", "lon", "values"],
+      "properties": {"id": {"type": "string"}, "name": {"type": "string"}, "lat": {"type": "number"}, "lon": {"type": "number"},
+        "event": {"type": "string"}, "source": {"type": "string"}, "relief": {"type": "number"}, "forest_density": {"type": "number"},
+        "values": {"type": "object", "additionalProperties": {"type": "object", "additionalProperties": {"type": "number"}}}}}}
+  }
+}
