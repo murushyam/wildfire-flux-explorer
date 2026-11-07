@@ -1,6 +1,14 @@
 # Wildfire Flux Explorer
 
+[![Live Demo](https://img.shields.io/badge/Live_Demo-Run_Online-2ea44f?style=for-the-badge&logo=githubpages&logoColor=white)](https://murushyam.github.io/wildfire-flux-explorer/)
+[![Platform](https://img.shields.io/badge/Platform-Web%20%7C%20Android-informational?style=flat-square&logo=googlechrome&logoColor=white)](https://murushyam.github.io/wildfire-flux-explorer/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square)](LICENSE)
+[![DOI: 10.1016/j.pce.2025.104177](https://img.shields.io/badge/DOI-10.1016%2Fj.pce.2025.104177-brightgreen.svg?style=flat-square)](https://doi.org/10.1016/j.pce.2025.104177)
+
 Interactive hand-gesture controlled 3D visualization of wildfire impacts on atmosphere-biosphere fluxes.
+
+> 🚀 **Live Web App**: **[https://murushyam.github.io/wildfire-flux-explorer/](https://murushyam.github.io/wildfire-flux-explorer/)**  
+> Instant access in any modern browser. Supports real-time webcam hand tracking (MediaPipe) and full keyboard/mouse/touch fallbacks.
 
 Inspired by [takeapart.app](https://takeapart.app). Built for exploring pre-fire, during-fire, and post-fire phases of energy and environmental fluxes (SH, LH, ET, GPP, VPD, AOD) over Indian forest ecosystems (Similipal, Bandhavgarh, Chamba).
 
@@ -57,13 +65,31 @@ Key papers:
 
 ## How to Run
 
+### 1. Online (Instant Demo)
+No installation or build required. Run directly in your web browser:
+👉 **[https://murushyam.github.io/wildfire-flux-explorer/](https://murushyam.github.io/wildfire-flux-explorer/)**
+
+Click *Enable hand tracking* and allow camera access. Hand tracking runs 100% locally on your machine via MediaPipe; video frames never leave your device. All features can also be controlled with mouse, keyboard, or touch.
+
+### 2. Local Web Server
 ES modules need a local server (opening `index.html` via `file://` will not load them):
 
 ```bash
 git clone https://github.com/murushyam/wildfire-flux-explorer && cd wildfire-flux-explorer
 python -m http.server 8000   # open http://localhost:8000 in Chrome
 ```
-Click *Enable hand tracking* and allow camera access. Hand tracking runs locally; video never leaves the device. No build step; Three.js and MediaPipe load from jsDelivr. GitHub Pages-ready (`.nojekyll`, root `index.html`).
+
+No build step required; Three.js and MediaPipe load from jsDelivr CDN. GitHub Pages-ready (`.nojekyll`, root `index.html`).
+
+### 3. Android Application (APK)
+An installable Android APK can be built locally using the automated build script:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\build_apk.ps1
+```
+
+The compiled and signed debug APK is output to:
+`app/build/outputs/apk/debug/app-debug.apk`
 
 ## Data schema (dropping in real values)
 
@@ -91,7 +117,8 @@ Suggested sources (site-mean over the burnt polygon, per phase window): GPP — 
 - Real data loaders (GEE/ERA5 export script) and verified Bandhavgarh/Chamba events.
 - Terrain from DEM (SRTM) and burned-area footprint.
 - Demo GIF for README/LinkedIn.
-- GitHub Pages deploy when the repo is made public.
+- [x] GitHub Pages deployed at https://murushyam.github.io/wildfire-flux-explorer/
+- [x] Android installable APK build pipeline verified
 - Performance tuning on low-end GPUs.
 
 License: MIT (see LICENSE). Private for now.
