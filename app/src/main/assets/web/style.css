@@ -1,7 +1,7 @@
 :root {
   --bg-dark: #05080e;
-  --bg-surface: rgba(11, 17, 28, 0.76);
-  --bg-surface-elevated: rgba(18, 28, 44, 0.88);
+  --bg-surface: rgba(11, 17, 28, 0.78);
+  --bg-surface-elevated: rgba(18, 28, 44, 0.90);
   --border-subtle: rgba(255, 255, 255, 0.08);
   --border-active: rgba(56, 139, 253, 0.5);
   --accent-blue: #388bfd;
@@ -70,7 +70,7 @@ html, body {
   top: 12px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 10;
+  z-index: 20;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -79,9 +79,19 @@ html, body {
   overflow-x: auto;
   white-space: nowrap;
   scrollbar-width: none;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
 }
 #topPill::-webkit-scrollbar {
   display: none;
+}
+
+#topPill.minimized {
+  transform: translate(-50%, -85%);
+  opacity: 0.85;
+}
+#topPill.minimized:hover {
+  transform: translate(-50%, -40%);
+  opacity: 1.0;
 }
 
 .brand-group {
@@ -135,6 +145,7 @@ select option {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
 .pill-buttons button:hover, .pill-btn:hover {
@@ -156,6 +167,21 @@ select option {
   margin-left: auto;
 }
 
+/* Performance Mode Toggle Button */
+.perf-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0, 210, 255, 0.1);
+  border-color: rgba(0, 210, 255, 0.35);
+  color: var(--accent-cyan);
+}
+.perf-toggle-btn.mode-full {
+  background: rgba(255, 87, 34, 0.15);
+  border-color: rgba(255, 87, 34, 0.4);
+  color: #ff9e80;
+}
+
 .icon-btn {
   background: rgba(255, 255, 255, 0.06);
   color: var(--text-primary);
@@ -168,10 +194,89 @@ select option {
   justify-content: center;
   font-size: 13px;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: all 0.15s ease;
 }
 .icon-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.minimize-btn {
+  font-size: 10px;
+  opacity: 0.8;
+}
+.close-btn {
+  width: 22px;
+  height: 22px;
+  font-size: 11px;
+}
+
+/* Floating Real-time Gesture Status Pill */
+.gesture-status-pill {
+  position: fixed;
+  top: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 18;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  pointer-events: none;
+  transition: all 0.2s ease;
+}
+.gesture-pill-icon {
+  font-size: 13px;
+}
+.gesture-pill-name {
+  font-weight: 700;
+  color: var(--accent-cyan);
+}
+.gesture-pill-divider {
+  color: var(--text-muted);
+}
+.gesture-pill-action {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+.gesture-status-pill.active {
+  border-color: rgba(0, 210, 255, 0.5);
+  box-shadow: 0 0 14px rgba(0, 210, 255, 0.35);
+}
+.gesture-status-pill.pulsing {
+  border-color: rgba(255, 87, 34, 0.6);
+  box-shadow: 0 0 16px rgba(255, 87, 34, 0.4);
+}
+
+/* Floating Exit Zen Mode Button */
+.exit-zen-btn {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(18, 28, 44, 0.85);
+  border: 1px solid rgba(0, 210, 255, 0.4);
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+  transition: all 0.2s ease;
+}
+.exit-zen-btn:hover {
+  background: rgba(0, 210, 255, 0.25);
+  border-color: #00d2ff;
 }
 
 /* Collapsible Research & Data Panel */
@@ -183,17 +288,23 @@ select option {
   max-width: calc(100vw - 28px);
   max-height: calc(100dvh - 190px);
   overflow-y: auto;
-  z-index: 10;
+  z-index: 15;
   padding: 12px 14px;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
 }
 #hud.collapsed {
-  transform: translateX(-360px);
+  transform: translateX(-370px);
   opacity: 0;
   pointer-events: none;
+}
+#hud.minimized .card-body {
+  display: none;
+}
+#hud.minimized {
+  padding-bottom: 8px;
 }
 
 .card-header {
@@ -207,10 +318,11 @@ select option {
   margin: 0;
   color: var(--accent-cyan);
 }
-.close-btn {
-  width: 22px;
-  height: 22px;
-  font-size: 11px;
+
+.card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .warn {
@@ -250,10 +362,17 @@ select option {
   bottom: 108px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 12;
+  z-index: 16;
   width: min(520px, calc(100vw - 28px));
   padding: 12px 16px;
   animation: slideUpFade 0.25s ease-out;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+}
+#stratumCard.minimized .stratum-details {
+  display: none;
+}
+#stratumCard.minimized {
+  padding: 8px 14px;
 }
 
 @keyframes slideUpFade {
@@ -319,9 +438,42 @@ select option {
   bottom: 12px;
   left: 50%;
   transform: translateX(-50%);
-  z-index: 10;
+  z-index: 15;
   width: min(580px, calc(100vw - 24px));
   padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
+}
+#controlDeck.minimized {
+  transform: translate(-50%, calc(100% - 32px));
+}
+#controlDeck.minimized .deck-body {
+  display: none;
+}
+
+.deck-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.deck-title-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.deck-icon {
+  font-size: 13px;
+}
+.deck-title {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: var(--text-secondary);
+}
+
+.deck-body {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -443,25 +595,77 @@ input[type="range"]#explodeSlider::-moz-range-thumb {
   font-size: 11px;
 }
 
-/* Cam Card */
+/* Cam Card & Video Container */
 #cam {
   position: fixed;
   right: 14px;
   bottom: 84px;
-  width: 220px;
-  z-index: 10;
+  width: 230px;
+  z-index: 17;
   padding: 10px;
-  display: none; /* Shown on camera enable */
+  display: none;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.2s ease;
 }
 #cam.active {
   display: block;
 }
-#video {
-  width: 100%;
-  transform: scaleX(-1);
-  border-radius: 6px;
+#cam.minimized .cam-body {
   display: none;
 }
+#cam.minimized {
+  padding-bottom: 8px;
+}
+
+.cam-header {
+  margin-bottom: 6px;
+}
+.cam-title-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.cam-icon {
+  font-size: 13px;
+}
+.cam-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent-cyan);
+}
+.cam-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.mini-btn {
+  font-size: 9.5px;
+  padding: 3px 6px;
+}
+
+.video-container {
+  position: relative;
+  width: 100%;
+  border-radius: 6px;
+  overflow: hidden;
+  background: #000;
+  aspect-ratio: 4 / 3;
+}
+#video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+  display: none;
+}
+#skeletonCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: scaleX(-1);
+  pointer-events: none;
+}
+
 #gesture {
   font-size: 11px;
   margin: 6px 0;
@@ -472,15 +676,152 @@ small {
   color: var(--text-muted);
 }
 
+/* Visual Gesture Guide Modal */
+.gesture-guide-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 100;
+  width: min(640px, calc(100vw - 28px));
+  max-height: calc(100dvh - 50px);
+  overflow-y: auto;
+  padding: 16px 20px;
+  animation: modalPop 0.2s ease-out;
+}
+
+@keyframes modalPop {
+  from { opacity: 0; transform: translate(-50%, -46%) scale(0.96); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1.0); }
+}
+
+.modal-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.modal-title-group h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+}
+.guide-icon {
+  font-size: 18px;
+}
+
+.guide-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.gesture-tile {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  transition: background 0.15s ease;
+}
+.gesture-tile:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(0, 210, 255, 0.3);
+}
+
+.gesture-visual {
+  font-size: 26px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 210, 255, 0.08);
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.gesture-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+.gesture-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #fff;
+}
+.gesture-trigger {
+  font-size: 10.5px;
+  color: var(--accent-cyan);
+}
+.gesture-action {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.gesture-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+}
+
+/* Zen View Mode (Clean full-screen visualization) */
+body.zen-mode #topPill {
+  transform: translate(-50%, -120px) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+body.zen-mode #hud {
+  transform: translateX(-400px) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+body.zen-mode #stratumCard {
+  transform: translate(-50%, 150px) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+body.zen-mode #controlDeck {
+  transform: translate(-50%, 150px) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+body.zen-mode #cam {
+  transform: translateY(220px) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+body.zen-mode #gestureGuideModal {
+  display: none !important;
+}
+body.zen-mode #gestureStatusPill {
+  top: 14px;
+  background: rgba(11, 17, 28, 0.5);
+  backdrop-filter: blur(8px);
+}
+
 /* Responsive Breakpoints for Mobile */
 @media (max-width: 640px) {
   #topPill {
     top: 8px;
-    padding: 5px 10px;
-    gap: 6px;
+    padding: 5px 8px;
+    gap: 5px;
   }
   .brand-group select {
-    max-width: 130px;
+    max-width: 120px;
+    font-size: 11px;
   }
   #controlDeck {
     bottom: 8px;
@@ -488,12 +829,12 @@ small {
     gap: 6px;
   }
   .row-label {
-    min-width: 40px;
+    min-width: 36px;
     font-size: 9px;
   }
   .stratum-tab {
-    padding: 4px 9px;
-    font-size: 10.5px;
+    padding: 4px 8px;
+    font-size: 10px;
   }
   #stratumCard {
     bottom: 96px;
@@ -503,5 +844,13 @@ small {
     top: 54px;
     left: 8px;
     max-height: calc(100dvh - 170px);
+  }
+  #cam {
+    bottom: 74px;
+    right: 8px;
+    width: 190px;
+  }
+  .guide-grid {
+    grid-template-columns: 1fr;
   }
 }

@@ -29,20 +29,44 @@
     <div id="vars" class="pill-buttons"></div>
   </div>
   <div class="action-group">
+    <button id="perfToggleBtn" class="pill-btn perf-toggle-btn" title="Toggle Graphics Tier: Light (Default) vs Full">
+      <span id="perfIcon">⚡</span> <span id="perfLabel">Light</span>
+    </button>
+    <button id="zenBtn" class="icon-btn" title="Toggle Zen / Clean View (Z)">👁</button>
+    <button id="gestureGuideBtn" class="icon-btn" title="Hand & Touch Gesture Guide">🖐</button>
     <button id="hudToggleBtn" class="icon-btn" title="Toggle Science & Chart Panel">📊</button>
     <button id="resetCamBtn" class="icon-btn" title="Reset 3D Camera">🎥</button>
+    <button id="topPillMinBtn" class="icon-btn minimize-btn" title="Minimize Header">▲</button>
   </div>
 </header>
+
+<!-- Real-time Gesture Feedback Status Pill -->
+<div id="gestureStatusPill" class="glass-pill gesture-status-pill">
+  <span id="gesturePillIcon" class="gesture-pill-icon">🖐</span>
+  <span id="gesturePillName" class="gesture-pill-name">Ready</span>
+  <span class="gesture-pill-divider">:</span>
+  <span id="gesturePillAction" class="gesture-pill-action">Show hand to control</span>
+</div>
+
+<!-- Floating Exit Zen Mode Button -->
+<button id="exitZenBtn" class="glass-pill exit-zen-btn" style="display: none;" title="Exit Zen Full-Screen View">
+  <span>👁 Exit Zen View</span>
+</button>
 
 <!-- Collapsible Research & Data Panel -->
 <aside id="hud" class="glass-card">
   <div class="card-header">
     <h2 id="phaseVar">Similipal Biosphere Reserve</h2>
-    <button id="hudCloseBtn" class="icon-btn close-btn" title="Close Panel">✕</button>
+    <div class="header-actions">
+      <button id="hudMinBtn" class="icon-btn minimize-btn" title="Minimize Panel">▼</button>
+      <button id="hudCloseBtn" class="icon-btn close-btn" title="Close Panel">✕</button>
+    </div>
   </div>
-  <div id="warn" class="warn">⚠ EXAMPLE placeholder values — not observations or published results</div>
-  <canvas id="chart" width="300" height="130"></canvas>
-  <div id="note" class="scroll-note"></div>
+  <div id="hudBody" class="card-body">
+    <div id="warn" class="warn">⚠ EXAMPLE placeholder values — not observations or published results</div>
+    <canvas id="chart" width="300" height="130"></canvas>
+    <div id="note" class="scroll-note"></div>
+  </div>
 </aside>
 
 <!-- Stratum 3D Callout Card (Appears on Solo or Tap) -->
@@ -52,7 +76,10 @@
       <span id="stratumTier" class="tier-badge">L2</span>
       <h3 id="stratumTitle">Overstory Canopy</h3>
     </div>
-    <button id="stratumCloseBtn" class="icon-btn close-btn" title="Dismiss Solo Mode">✕</button>
+    <div class="header-actions">
+      <button id="stratumMinBtn" class="icon-btn minimize-btn" title="Minimize Details">▼</button>
+      <button id="stratumCloseBtn" class="icon-btn close-btn" title="Dismiss Solo Mode">✕</button>
+    </div>
   </div>
   <div id="stratumDetails" class="stratum-details">
     <p id="stratumDesc" class="stratum-desc"></p>
@@ -62,38 +89,148 @@
 
 <!-- Bottom Tactile Control Deck -->
 <footer id="controlDeck" class="glass-card control-deck">
-  <!-- Stratum Quick-Selector Tabs -->
-  <div class="deck-row strata-tabs-row">
-    <span class="row-label">STRATA</span>
-    <div id="strataTabs" class="strata-tabs">
-      <button data-stratum="-1" class="stratum-tab on">All</button>
-      <button data-stratum="2" class="stratum-tab">Canopy</button>
-      <button data-stratum="3" class="stratum-tab">Understory</button>
-      <button data-stratum="4" class="stratum-tab">Litter</button>
-      <button data-stratum="5" class="stratum-tab">Duff</button>
-      <button data-stratum="6" class="stratum-tab">Soil</button>
-      <button data-stratum="0" class="stratum-tab">Flux</button>
+  <div class="deck-header">
+    <div class="deck-title-group">
+      <span class="deck-icon">🎛</span>
+      <span class="deck-title">LAYERS & DISSECTION</span>
     </div>
+    <button id="deckMinBtn" class="icon-btn minimize-btn" title="Minimize Control Deck">▼</button>
   </div>
-
-  <!-- Tactile Stratum Scrubber -->
-  <div class="deck-row scrubber-row">
-    <span class="scrubber-label">Assemble</span>
-    <div class="scrubber-track-container">
-      <input type="range" id="explodeSlider" min="0" max="1" step="0.01" value="0" title="Scrub Layer Dissection" />
-      <div id="scrubberFill" class="scrubber-fill"></div>
+  <div id="deckBody" class="deck-body">
+    <!-- Stratum Quick-Selector Tabs -->
+    <div class="deck-row strata-tabs-row">
+      <span class="row-label">STRATA</span>
+      <div id="strataTabs" class="strata-tabs">
+        <button data-stratum="-1" class="stratum-tab on">All</button>
+        <button data-stratum="2" class="stratum-tab">Canopy</button>
+        <button data-stratum="3" class="stratum-tab">Understory</button>
+        <button data-stratum="4" class="stratum-tab">Litter</button>
+        <button data-stratum="5" class="stratum-tab">Duff</button>
+        <button data-stratum="6" class="stratum-tab">Soil</button>
+        <button data-stratum="0" class="stratum-tab">Flux</button>
+      </div>
     </div>
-    <span class="scrubber-label">Explode All</span>
-    <button id="explodeBtn" class="pill-btn explode-toggle-btn" title="Toggle Dissection (E)">TakeApart</button>
+
+    <!-- Tactile Stratum Scrubber -->
+    <div class="deck-row scrubber-row">
+      <span class="scrubber-label">Assemble</span>
+      <div class="scrubber-track-container">
+        <input type="range" id="explodeSlider" min="0" max="1" step="0.01" value="0" title="Scrub Layer Dissection" />
+        <div id="scrubberFill" class="scrubber-fill"></div>
+      </div>
+      <span class="scrubber-label">Explode All</span>
+      <button id="explodeBtn" class="pill-btn explode-toggle-btn" title="Toggle Dissection (E)">TakeApart</button>
+    </div>
   </div>
 </footer>
 
 <!-- MediaPipe Hand Tracking Overlay -->
 <div id="cam" class="glass-card cam-card">
-  <video id="video" playsinline muted></video>
-  <button id="camBtn" class="pill-btn cam-toggle-btn">🖐 Enable Hand Tracking</button>
-  <p id="gesture">Touch: drag = orbit, 2-finger = zoom/pan. Keys: E = explode, ←/→ = phase, 1–6 = var, space = pause</p>
-  <small>Camera processed locally in browser. No upload.</small>
+  <div class="card-header cam-header">
+    <div class="cam-title-group">
+      <span class="cam-icon">🖐</span>
+      <span class="cam-title">Hand Tracking</span>
+    </div>
+    <div class="cam-actions">
+      <button id="toggleSkeletonBtn" class="pill-btn mini-btn" title="Toggle Finger Detection Lines">🦴 Skeleton: ON</button>
+      <button id="camMinBtn" class="icon-btn minimize-btn" title="Minimize Camera">▼</button>
+      <button id="camCloseBtn" class="icon-btn close-btn" title="Close Camera">✕</button>
+    </div>
+  </div>
+  <div id="camBody" class="cam-body">
+    <div class="video-container" id="videoContainer">
+      <video id="video" playsinline muted></video>
+      <canvas id="skeletonCanvas"></canvas>
+    </div>
+    <button id="camBtn" class="pill-btn cam-toggle-btn">🖐 Enable Hand Tracking</button>
+    <p id="gesture">Touch: drag = orbit, 2-finger = zoom/pan. Keys: E = explode, ←/→ = phase, 1–6 = var, Z = Zen</p>
+    <small>Camera processed locally in browser. No upload.</small>
+  </div>
+</div>
+
+<!-- Visual Gesture Guidance Modal -->
+<div id="gestureGuideModal" class="glass-card gesture-guide-modal" style="display: none;">
+  <div class="card-header">
+    <div class="modal-title-group">
+      <span class="guide-icon">🖐</span>
+      <h3>Hand & Touch Gesture Guide</h3>
+    </div>
+    <button id="guideCloseBtn" class="icon-btn close-btn" title="Close Guide">✕</button>
+  </div>
+  <div class="guide-grid">
+    <div class="gesture-tile">
+      <div class="gesture-visual">🤏</div>
+      <div class="gesture-meta">
+        <span class="gesture-title">Pinch / Spread</span>
+        <span class="gesture-trigger">Thumb + Index Distance</span>
+        <span class="gesture-action">Scrub Layer Dissection (TakeApart) & Zoom</span>
+      </div>
+      <span class="gesture-badge">Scrubber</span>
+    </div>
+    <div class="gesture-tile">
+      <div class="gesture-visual">🖐</div>
+      <div class="gesture-meta">
+        <span class="gesture-title">Open Palm (Move / Hold)</span>
+        <span class="gesture-trigger">5 Fingers Extended</span>
+        <span class="gesture-action">Orbit 3D Camera (Hold 1s to Explode/Assemble)</span>
+      </div>
+      <span class="gesture-badge">Orbit / Explode</span>
+    </div>
+    <div class="gesture-tile">
+      <div class="gesture-visual">✌</div>
+      <div class="gesture-meta">
+        <span class="gesture-title">Peace Sign (V-Sign)</span>
+        <span class="gesture-trigger">Index + Middle Extended</span>
+        <span class="gesture-action">Cycle Fire Phase (Pre → During → Post)</span>
+      </div>
+      <span class="gesture-badge">Phases</span>
+    </div>
+    <div class="gesture-tile">
+      <div class="gesture-visual">🤟</div>
+      <div class="gesture-meta">
+        <span class="gesture-title">Three Fingers</span>
+        <span class="gesture-trigger">Index + Middle + Ring</span>
+        <span class="gesture-action">Cycle / Solo Strata Layers (Canopy, Duff, etc.)</span>
+      </div>
+      <span class="gesture-badge">Strata</span>
+    </div>
+    <div class="gesture-tile">
+      <div class="gesture-visual">☝</div>
+      <div class="gesture-meta">
+        <span class="gesture-title">Point (1 Finger)</span>
+        <span class="gesture-trigger">Index Finger Extended Alone</span>
+        <span class="gesture-action">Cycle Atmospheric Flux Variable (SH, LH, ...)</span>
+      </div>
+      <span class="gesture-badge">Variables</span>
+    </div>
+    <div class="gesture-tile">
+      <div class="gesture-visual">✊</div>
+      <div class="gesture-meta">
+        <span class="gesture-title">Fist</span>
+        <span class="gesture-trigger">All Fingers Curled</span>
+        <span class="gesture-action">Reset Camera View & Pause/Resume Simulation</span>
+      </div>
+      <span class="gesture-badge">Reset / Pause</span>
+    </div>
+    <div class="gesture-tile">
+      <div class="gesture-visual">👍</div>
+      <div class="gesture-meta">
+        <span class="gesture-title">Thumbs Up</span>
+        <span class="gesture-trigger">Thumb Up, Fingers Curled</span>
+        <span class="gesture-action">Toggle Zen / Clean View (Hide All Panels)</span>
+      </div>
+      <span class="gesture-badge">Zen View</span>
+    </div>
+    <div class="gesture-tile">
+      <div class="gesture-visual">↔🖐</div>
+      <div class="gesture-meta">
+        <span class="gesture-title">Horizontal Swipe</span>
+        <span class="gesture-trigger">Rapid Palm Sweep Left / Right</span>
+        <span class="gesture-action">Cycle Ecological Monitoring Site</span>
+      </div>
+      <span class="gesture-badge">Sites</span>
+    </div>
+  </div>
 </div>
 
 <script type="module" src="js/main.js"></script>

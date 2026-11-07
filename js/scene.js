@@ -34,7 +34,8 @@ export const H = (x, z, off = 0, relief = 1.0) => {
 /**
  * Configure studio-grade lighting and PBR tone mapping.
  */
-export function setupStudioLighting(scene, renderer) {
+export function setupStudioLighting(scene, renderer, options = {}) {
+  const perfMode = options.perfMode || 'light';
   if (renderer) {
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.08;
@@ -42,9 +43,10 @@ export function setupStudioLighting(scene, renderer) {
       renderer.outputColorSpace = THREE.SRGBColorSpace;
     }
     const dpr = (typeof window !== 'undefined' && window.devicePixelRatio) ? window.devicePixelRatio : 1.0;
-    renderer.setPixelRatio(Math.min(dpr, 1.75));
+    const maxDpr = (perfMode === 'full') ? 1.75 : 1.0;
+    renderer.setPixelRatio(Math.min(dpr, maxDpr));
     if (renderer.shadowMap) {
-      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.enabled = (perfMode === 'full');
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     }
   }
@@ -138,7 +140,7 @@ function disposeSystem(sys) {
 /**
  * Reconstruct the 3D scene for the given ecological monitoring site.
  */
-export function buildSite(world, site) {
+export function buildSite(world, site, options = {}) {
   // 1. Clean up previous subsystems
   if (world.stratBlock) disposeSystem(world.stratBlock);
   if (world.forest) disposeSystem(world.forest);
@@ -152,6 +154,10 @@ export function buildSite(world, site) {
 
   world.group.clear();
   world.site = site;
+
+  const perfMode = options.perfMode || world.perfMode || 'light';
+  world.perfMode = perfMode;
+  const isLight = perfMode === 'light';
 
   // 2. Site parameters & micro-relief
   const r = rng(hash(site.id || 'similipal'));
@@ -172,9 +178,9 @@ export function buildSite(world, site) {
     terrainH,
     burnZone,
     textureSize: 256,
-    segmentsX: 32,
-    segmentsZ: 32,
-    segmentsY: 10
+    segmentsX: isLight ? 16 : 32,
+    segmentsZ: isLight ? 16 : 32,
+    segmentsY: isLight ? 6 : 10
   });
   world.stratBlock = stratBlock;
 
@@ -188,7 +194,8 @@ export function buildSite(world, site) {
   world.duffGroup = duffGroup;
 
   // 4. Create Procedural Multi-Component Forest (Canopy Stratum L2)
-  const treeCount = Math.round(850 * density);
+  const treeBase = isLight ? 380 : 850;
+  const treeCount = Math.round(treeBase * density);
   const forest = createForest({
     count: treeCount,
     bounds: { minX: -9.2, maxX: 9.2, minZ: -9.2, maxZ: 9.2 },
@@ -200,7 +207,8 @@ export function buildSite(world, site) {
   world.forest = forest;
 
   // 5. Create Understory Ladder Fuels & Shrubs (Stratum L3)
-  const shrubCount = Math.round(420 * density);
+  const shrubBase = isLight ? 180 : 420;
+  const shrubCount = Math.round(shrubBase * density);
   const understory = createUnderstory({
     count: shrubCount,
     bounds: { minX: -9.2, maxX: 9.2, minZ: -9.2, maxZ: 9.2 },
@@ -212,8 +220,9 @@ export function buildSite(world, site) {
   world.understory = understory;
 
   // 6. Create Surface Litter Bed (Oi Horizon Fine Fuels - Stratum L4)
+  const litterCount = isLight ? 500 : 1200;
   const litter = createSurfaceLitter({
-    count: 1200,
+    count: litterCount,
     bounds: { minX: -9.5, maxX: 9.5, minZ: -9.5, maxZ: 9.5 },
     terrainH,
     burnZone,
@@ -228,14 +237,19 @@ export function buildSite(world, site) {
 
   // 3D GPU raymarched volumetric fire volume
   const fire = createVolumetricFire(burnCenter3D, burnZone.r);
+  if (typeof fire.setPerfTier === 'function') {
+    fire.setPerfTier(perfMode);
+  }
   world.fire = fire;
 
   // Convective buoyant cooling embers (Sensible Heat driven)
-  const embers = createEmbers(burnCenter3D, 450);
+  const emberCount = isLight ? 180 : 450;
+  const embers = createEmbers(burnCenter3D, emberCount);
   world.embers = embers;
 
   // Convective aerodynamic smoke plume (Aerosol Optical Depth driven)
-  const smoke = createSmokePlume(burnCenter3D);
+  const smokeCount = isLight ? 120 : 320;
+  const smoke = createSmokePlume(burnCenter3D, smokeCount);
   world.smoke = smoke;
 
   // Atmosphere-Biosphere Flux Coupling Vector Arrows
@@ -437,5 +451,35 @@ export function setArrows(world, s, dir, color, variableName = null) {
 export function applyExplode(world, e) {
   if (world.stratigraphy && typeof world.stratigraphy.setExplodeTarget === 'function') {
     world.stratigraphy.setExplodeTarget(e);
+  }
+}
+
+/**
+ * Dynamically adjust graphics & performance tier (Light vs Full) without page reload.
+ */
+export function applyPerfTier(world, mode = 'light') {
+  if (!world) return;
+  world.perfMode = mode;
+  const isLight = mode === 'light';
+
+  if (world.renderer) {
+    const dpr = (typeof window !== 'undefined' && window.devicePixelRatio) ? window.devicePixelRatio : 1.0;
+    const maxDpr = isLight ? 1.0 : 1.75;
+    world.renderer.setPixelRatio(Math.min(dpr, maxDpr));
+    if (world.renderer.shadowMap) {
+      world.renderer.shadowMap.enabled = !isLight;
+    }
+  }
+
+  if (world.fire && typeof world.fire.setPerfTier === 'function') {
+    world.fire.setPerfTier(mode);
+  }
+
+  if (world.embers && typeof world.embers.setMaxActive === 'function') {
+    world.embers.setMaxActive(isLight ? 180 : 450);
+  }
+
+  if (world.smoke && typeof world.smoke.setMaxActive === 'function') {
+    world.smoke.setMaxActive(isLight ? 120 : 320);
   }
 }

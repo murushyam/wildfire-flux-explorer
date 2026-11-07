@@ -417,15 +417,18 @@ export const FIRE_FRAGMENT_SHADER = /* glsl */ `
     vec3 rayOrigin = vWorldPosition;
     vec3 rayDir = normalize(vWorldPosition - uCameraPos);
 
-    // 36 Raymarch steps (balanced for 60 FPS mobile fill-rate)
-    const int STEPS = 36;
+    // Raymarch steps (dynamic: 16 in Light mode, 36 in Full mode)
+    #ifndef STEPS
+    #define STEPS 16
+    #endif
+    const int STEPS_COUNT = STEPS;
     float maxDist = uBurnRadius * 2.2;
-    float stepLength = maxDist / float(STEPS);
+    float stepLength = maxDist / float(STEPS_COUNT);
 
     vec4 accumColor = vec4(0.0);
     vec3 p = rayOrigin;
 
-    for (int i = 0; i < STEPS; i++) {
+    for (int i = 0; i < STEPS_COUNT; i++) {
       vec3 rel = p - uBurnCenter;
       float r = length(rel.xz) / max(0.1, uBurnRadius);
       float h = rel.y / max(0.1, uFlameHeight);
@@ -540,6 +543,9 @@ export function createVolumetricFire(burnCenter = { x: 1.5, y: 0.0, z: -1.0 }, b
   geom.translate(0, flameHeight * 0.5, 0);
 
   const material = new THREE.ShaderMaterial({
+    defines: {
+      STEPS: 16
+    },
     vertexShader: FIRE_VERTEX_SHADER,
     fragmentShader: FIRE_FRAGMENT_SHADER,
     uniforms: {
@@ -587,6 +593,17 @@ export function createVolumetricFire(burnCenter = { x: 1.5, y: 0.0, z: -1.0 }, b
     setBurnRadius(r) {
       const safeR = Math.max(0.5, r);
       material.uniforms.uBurnRadius.value = safeR;
+    },
+    setSteps(stepCount) {
+      const s = Math.max(8, Math.min(64, stepCount));
+      if (!material.defines || material.defines.STEPS !== s) {
+        material.defines = material.defines || {};
+        material.defines.STEPS = s;
+        material.needsUpdate = true;
+      }
+    },
+    setPerfTier(tier) {
+      this.setSteps(tier === 'full' ? 36 : 16);
     },
     dispose() {
       geom.dispose();
@@ -707,6 +724,9 @@ export function createEmbers(burnCenter = { x: 1.5, y: 0.0, z: -1.0 }, count = 7
     },
     setBurnCenter(x, y, z) {
       center.x = x; center.y = y; center.z = z;
+    },
+    setMaxActive(n) {
+      mesh.count = Math.max(1, Math.min(emberCount, n || emberCount));
     },
     dispose() {
       geom.dispose();
@@ -832,6 +852,9 @@ export function createSmokePlume(burnCenter = { x: 1.5, y: 0.0, z: -1.0 }, count
     },
     setBurnCenter(x, y, z) {
       center.x = x; center.y = y; center.z = z;
+    },
+    setMaxActive(n) {
+      mesh.count = Math.max(1, Math.min(puffCount, n || puffCount));
     },
     dispose() {
       geom.dispose();
