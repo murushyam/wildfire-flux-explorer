@@ -13,6 +13,7 @@
 
     <application
         android:allowBackup="true"
+        android:hardwareAccelerated="true"
         android:icon="@drawable/ic_launcher"
         android:label="Wildfire Flux Explorer"
         android:roundIcon="@drawable/ic_launcher"

@@ -1,108 +1,441 @@
 import * as THREE from 'three';
+import { createForest, createUnderstory, createSurfaceLitter } from './forest-generator.js';
+import { createStratigraphyBlock, StratigraphyController, STRATA_DEFINITIONS } from './stratigraphy-dissection.js';
+import { createVolumetricFire, createEmbers, createSmokePlume, createFluxArrows } from './volumetric-fire.js';
 
-function rng(seed) { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
-function hash(str) { let h = 2166136261; for (const c of str) h = Math.imul(h ^ c.charCodeAt(0), 16777619); return h >>> 0; }
+/**
+ * Seedable linear congruential generator for deterministic procedural site features.
+ */
+function rng(seed) {
+  let s = seed >>> 0;
+  return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
+}
 
-export function makeWorld(scene) {
-  const world = { group: new THREE.Group(), systems: {} };
+/**
+ * 32-bit FNV-1a hash function for strings.
+ */
+function hash(str) {
+  let h = 2166136261;
+  for (const c of str) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+  return h >>> 0;
+}
+
+/**
+ * Harmonic micro-relief terrain height function H(x, z).
+ */
+export const H = (x, z, off = 0, relief = 1.0) => {
+  return relief * (
+    Math.sin(x * 0.35 + off) * 1.2 +
+    Math.cos(z * 0.3 + off * 2.0) * 1.0 +
+    Math.sin((x + z) * 0.8 + off) * 0.3
+  );
+};
+
+/**
+ * Configure studio-grade lighting and PBR tone mapping.
+ */
+export function setupStudioLighting(scene, renderer) {
+  if (renderer) {
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+    if (THREE.SRGBColorSpace) {
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
+    }
+    const dpr = (typeof window !== 'undefined' && window.devicePixelRatio) ? window.devicePixelRatio : 1.0;
+    renderer.setPixelRatio(Math.min(dpr, 1.75));
+    if (renderer.shadowMap) {
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    }
+  }
+
+  // Soft ambient sky/ground fill
+  const ambient = new THREE.HemisphereLight(0x384a60, 0x141a20, 1.1);
+  ambient.name = 'StudioAmbientLight';
+  scene.add(ambient);
+
+  // Key directional sunlight with high-precision soft shadows
+  const sunKey = new THREE.DirectionalLight(0xfff5e6, 2.4);
+  sunKey.name = 'StudioSunKeyLight';
+  sunKey.position.set(12, 22, 10);
+  sunKey.castShadow = true;
+  if (sunKey.shadow) {
+    sunKey.shadow.mapSize.width = 1024;
+    sunKey.shadow.mapSize.height = 1024;
+    sunKey.shadow.camera.near = 0.5;
+    sunKey.shadow.camera.far = 60;
+    sunKey.shadow.camera.left = -16;
+    sunKey.shadow.camera.right = 16;
+    sunKey.shadow.camera.top = 16;
+    sunKey.shadow.camera.bottom = -16;
+    sunKey.shadow.bias = -0.0004;
+    sunKey.shadow.normalBias = 0.02;
+  }
+  scene.add(sunKey);
+
+  // Cool grazing rim light for edge highlights and foliage silhouettes
+  const rimLight = new THREE.DirectionalLight(0x73a8ff, 1.6);
+  rimLight.name = 'StudioRimLight';
+  rimLight.position.set(-12, 10, -14);
+  scene.add(rimLight);
+
+  // Soft warm fill light from opposite angle to prevent pitch-black shadows
+  const fillLight = new THREE.DirectionalLight(0xffeedd, 0.6);
+  fillLight.name = 'StudioFillLight';
+  fillLight.position.set(-6, 8, 8);
+  scene.add(fillLight);
+
+  return { ambient, sunKey, rimLight, fillLight };
+}
+
+/**
+ * Initialize the 3D world container and studio environment.
+ */
+export function makeWorld(scene, renderer = null) {
+  const world = {
+    scene,
+    renderer,
+    group: new THREE.Group(),
+    systems: {},
+    stratigraphy: null,
+    layers: null,
+    forest: null,
+    understory: null,
+    litter: null,
+    stratBlock: null,
+    fire: null,
+    embers: null,
+    smoke: null,
+    flux: null,
+    site: null,
+    burn: { x: 1.5, z: -1.0, r: 4.5 },
+    H: (x, z) => 0
+  };
+  world.group.name = 'WorldRootGroup';
   scene.add(world.group);
-  scene.add(new THREE.HemisphereLight(0xbfd8ff, 0x203010, 1.0));
-  const sun = new THREE.DirectionalLight(0xffffff, 1.2); sun.position.set(5, 10, 3); scene.add(sun);
+
+  setupStudioLighting(scene, renderer);
+
   return world;
 }
 
-const H = (x, z, r, relief) => relief * (Math.sin(x * 0.35 + r) * 1.2 + Math.cos(z * 0.3 + r * 2) * 1.0 + Math.sin((x + z) * 0.8 + r) * 0.3);
+/**
+ * Safely dispose a Three.js subsystem.
+ */
+function disposeSystem(sys) {
+  if (!sys) return;
+  try {
+    if (typeof sys.dispose === 'function') {
+      sys.dispose();
+    } else if (sys.geometry && typeof sys.geometry.dispose === 'function') {
+      sys.geometry.dispose();
+    }
+  } catch (err) {
+    console.warn('System disposal warning:', err);
+  }
+}
 
+/**
+ * Reconstruct the 3D scene for the given ecological monitoring site.
+ */
 export function buildSite(world, site) {
+  // 1. Clean up previous subsystems
+  if (world.stratBlock) disposeSystem(world.stratBlock);
+  if (world.forest) disposeSystem(world.forest);
+  if (world.understory) disposeSystem(world.understory);
+  if (world.litter) disposeSystem(world.litter);
+  if (world.fire) disposeSystem(world.fire);
+  if (world.embers) disposeSystem(world.embers);
+  if (world.smoke) disposeSystem(world.smoke);
+  if (world.flux) disposeSystem(world.flux);
+  if (world.stratigraphy) disposeSystem(world.stratigraphy);
+
   world.group.clear();
-  const r = rng(hash(site.id)); const off = r() * 10; const relief = site.relief ?? 1;
-  const geo = new THREE.PlaneGeometry(20, 20, 80, 80); geo.rotateX(-Math.PI / 2);
-  const p = geo.attributes.position;
-  for (let i = 0; i < p.count; i++) p.setY(i, H(p.getX(i), p.getZ(i), off, relief));
-  geo.computeVertexNormals();
-  geo.setAttribute('color', new THREE.Float32BufferAttribute(new Float32Array(p.count * 3), 3));
-  world.terrain = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true }));
-  world.burn = site.burn_zone || { x: 0, z: 0, r: 4 }; world.H = (x, z) => H(x, z, off, relief);
-  world.group.add(world.terrain);
-  const N = Math.round(1500 * (site.forest_density ?? 0.8));
-  const tree = new THREE.ConeGeometry(0.15, 0.6, 5); tree.translate(0, 0.3, 0);
-  world.trees = new THREE.InstancedMesh(tree, new THREE.MeshStandardMaterial({ color: 0x2f7d32 }), N);
-  const m = new THREE.Matrix4(); world.treePos = [];
-  for (let i = 0; i < N; i++) {
-    const x = (r() - 0.5) * 19, z = (r() - 0.5) * 19, y = H(x, z, off, relief), s = 0.6 + r() * 0.8;
-    m.makeScale(s, s, s).setPosition(x, y, z); world.trees.setMatrixAt(i, m); world.treePos.push([x, y, z]);
-  }
-  world.group.add(world.trees);
-  // Atmosphere layers (explode/collapse stack)
-  world.layers = ['Surface layer', 'Boundary layer', 'Free troposphere'].map((n, i) => {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(20, 0.04, 20), new THREE.MeshBasicMaterial({ color: [0x66ccff, 0x8899ff, 0xbb99ff][i], transparent: true, opacity: 0.12, depthWrite: false }));
-    m.userData.base = 3.5 + i * 2.5; m.position.y = m.userData.base; m.name = n; world.group.add(m); return m;
+  world.site = site;
+
+  // 2. Site parameters & micro-relief
+  const r = rng(hash(site.id || 'similipal'));
+  const off = r() * 10;
+  const relief = site.relief ?? 1.0;
+  const density = site.forest_density ?? 0.8;
+  const burnZone = site.burn_zone || { x: 1.5, z: -1.0, r: 4.5 };
+  const terrainH = (x, z) => H(x, z, off, relief);
+
+  world.burn = burnZone;
+  world.H = terrainH;
+
+  // 3. Create 3D Solid Pedological Soil Stratigraphy Block (20m x 20m x 3.5m)
+  const stratBlock = createStratigraphyBlock({
+    width: 20,
+    length: 20,
+    depth: 3.5,
+    terrainH,
+    burnZone,
+    textureSize: 256,
+    segmentsX: 32,
+    segmentsZ: 32,
+    segmentsY: 10
   });
-  // Flux arrow grid
-  world.arrows = [];
-  for (let x = -8; x <= 8; x += 4) for (let z = -8; z <= 8; z += 4) {
-    const a = new THREE.ArrowHelper(new THREE.Vector3(0, 1, 0), new THREE.Vector3(x, H(x, z, off, relief) + 0.8, z), 1, 0xffffff, 0.35, 0.22);
-    a.userData.base = a.position.y; world.group.add(a); world.arrows.push(a);
+  world.stratBlock = stratBlock;
+
+  // Extract Duff Peat Slab Mesh to Stratum L5
+  const duffGroup = new THREE.Group();
+  duffGroup.name = 'StratumGroup_Duff';
+  if (stratBlock.duffMesh) {
+    stratBlock.group.remove(stratBlock.duffMesh);
+    duffGroup.add(stratBlock.duffMesh);
   }
-  world.systems = {
-    fire: particles(world, 1500, 0xff5a1f, 0.12),
-    smoke: particles(world, 2500, 0x8a8a8a, 0.25, 0.35),
-    up: particles(world, 1200, 0x4fc3f7, 0.08),   // LH / ET / SH upward
-    down: particles(world, 800, 0x76ff03, 0.08),   // GPP uptake
+  world.duffGroup = duffGroup;
+
+  // 4. Create Procedural Multi-Component Forest (Canopy Stratum L2)
+  const treeCount = Math.round(850 * density);
+  const forest = createForest({
+    count: treeCount,
+    bounds: { minX: -9.2, maxX: 9.2, minZ: -9.2, maxZ: 9.2 },
+    terrainH,
+    burnZone,
+    textureSize: 256,
+    seed: hash(site.id + '_trees')
+  });
+  world.forest = forest;
+
+  // 5. Create Understory Ladder Fuels & Shrubs (Stratum L3)
+  const shrubCount = Math.round(420 * density);
+  const understory = createUnderstory({
+    count: shrubCount,
+    bounds: { minX: -9.2, maxX: 9.2, minZ: -9.2, maxZ: 9.2 },
+    terrainH,
+    burnZone,
+    textureSize: 256,
+    seed: hash(site.id + '_shrubs')
+  });
+  world.understory = understory;
+
+  // 6. Create Surface Litter Bed (Oi Horizon Fine Fuels - Stratum L4)
+  const litter = createSurfaceLitter({
+    count: 1200,
+    bounds: { minX: -9.5, maxX: 9.5, minZ: -9.5, maxZ: 9.5 },
+    terrainH,
+    burnZone,
+    textureSize: 256,
+    seed: hash(site.id + '_litter')
+  });
+  world.litter = litter;
+
+  // 7. Volumetric Raymarched Fire, Embers, Smoke Plume & Flux Arrows
+  const burnElevation = terrainH(burnZone.x, burnZone.z);
+  const burnCenter3D = { x: burnZone.x, y: burnElevation, z: burnZone.z };
+
+  // 3D GPU raymarched volumetric fire volume
+  const fire = createVolumetricFire(burnCenter3D, burnZone.r);
+  world.fire = fire;
+
+  // Convective buoyant cooling embers (Sensible Heat driven)
+  const embers = createEmbers(burnCenter3D, 450);
+  world.embers = embers;
+
+  // Convective aerodynamic smoke plume (Aerosol Optical Depth driven)
+  const smoke = createSmokePlume(burnCenter3D);
+  world.smoke = smoke;
+
+  // Atmosphere-Biosphere Flux Coupling Vector Arrows
+  const flux = createFluxArrows();
+  flux.setVariableFocus('SH'); // Default to focused variable to stay under draw call budget
+  world.flux = flux;
+
+  // 8. Assemble the 7 Ecological Strata with StratigraphyController
+  const ctrl = new StratigraphyController({
+    scene: world.group,
+    springK: 16.0,
+    springZeta: 0.75,
+    explode: 0.0,
+    autoCreateLayers: false
+  });
+
+  const attachStratum = (idx, grp) => {
+    const prevGrp = ctrl.layers[idx]?.group;
+    if (prevGrp && prevGrp.parent) {
+      prevGrp.parent.remove(prevGrp);
+    }
+    ctrl.setLayerGroup(idx, grp);
+    if (grp && !grp.parent) {
+      world.group.add(grp);
+    }
   };
+
+  // Stratum 0 (L0: Troposphere - Upper atmosphere & Eddy covariance flux grid)
+  attachStratum(0, flux.group);
+
+  // Stratum 1 (L1: Planetary Boundary Layer - Convective pyrocumulus smoke plume)
+  const pblGroup = new THREE.Group();
+  pblGroup.name = 'StratumGroup_PBL';
+  pblGroup.add(smoke.mesh);
+  attachStratum(1, pblGroup);
+
+  // Stratum 2 (L2: Overstory Canopy - Shorea robusta crown crowns)
+  attachStratum(2, forest.group);
+
+  // Stratum 3 (L3: Understory & Ladder Fuels - Bamboo thickets & shrubs)
+  attachStratum(3, understory.group);
+
+  // Stratum 4 (L4: Surface Litter - Fresh dry leaves, twigs & active flaming front)
+  const litterLayerGroup = new THREE.Group();
+  litterLayerGroup.name = 'StratumGroup_LitterAndFlames';
+  litterLayerGroup.add(litter.group);
+  litterLayerGroup.add(fire.mesh);
+  litterLayerGroup.add(embers.mesh);
+  attachStratum(4, litterLayerGroup);
+
+  // Stratum 5 (L5: Duff Layer - Oe/Oa smoldering fermentation peat slab)
+  attachStratum(5, duffGroup);
+
+  // Stratum 6 (L6: Geological Soil Block - A/B/C pedological horizons & bedrock)
+  attachStratum(6, stratBlock.group);
+
+  world.stratigraphy = ctrl;
+  world.layers = ctrl.layers; // Backwards-compatible reference
+
+  // Register all active simulation subsystems in world.systems
+  world.systems = {
+    forest,
+    understory,
+    litter,
+    stratBlock,
+    fire,
+    embers,
+    smoke,
+    flux,
+    stratigraphy: ctrl
+  };
+
+  return world;
 }
 
-function particles(world, n, color, size, opacity = 0.9) {
-  const g = new THREE.BufferGeometry(); const pos = new Float32Array(n * 3);
-  for (let i = 0; i < n; i++) seed(world, pos, i);
-  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  const pts = new THREE.Points(g, new THREE.PointsMaterial({ color, size, transparent: true, opacity, depthWrite: false }));
-  pts.userData = { n, active: 0 }; world.group.add(pts); return pts;
-}
-function seed(world, pos, i) {
-  const t = world.treePos[(Math.random() * world.treePos.length) | 0] || [0, 0, 0];
-  pos[i * 3] = t[0]; pos[i * 3 + 1] = t[1] + Math.random() * 4; pos[i * 3 + 2] = t[2];
-}
+/**
+ * Per-frame animation and simulation update loop.
+ */
+export function updateSystems(world, k, dt, time = 0, options = {}) {
+  const safeDt = Math.max(0.001, Math.min(0.06, dt || 0.016));
+  const t = typeof time === 'number' ? time : performance.now() * 0.001;
 
-// Map normalized intensities (0..1) to visible particle counts; animate.
-export function updateSystems(world, k, dt) {
-  const { fire, smoke, up, down } = world.systems; if (!fire) return;
-  const set = (s, f) => { s.userData.active = Math.floor(s.userData.n * Math.max(0, Math.min(1, f))); s.geometry.setDrawRange(0, s.userData.active); };
-  set(fire, k.fire); set(smoke, k.aod); set(up, k.up); set(down, k.gpp);
-  move(world, fire, 2.0 * dt, 1.5); move(world, smoke, 0.8 * dt, 6, 0.3 * dt); move(world, up, 1.6 * dt, 5); move(world, down, -1.2 * dt, 5);
-}
-function move(world, s, vy, top, drift = 0) {
-  const p = s.geometry.attributes.position.array;
-  for (let i = 0; i < s.userData.active; i++) {
-    p[i * 3 + 1] += vy; p[i * 3] += drift;
-    const base = world.treePos.length ? 0 : 0;
-    if (p[i * 3 + 1] > top + 3 || p[i * 3 + 1] < -3 + base) seed(world, p, i);
+  const phase = options.phase || 'during';
+  const site = options.site || world.site;
+  const variable = options.variable || 'SH';
+  const cameraPos = options.cameraPos || null;
+
+  // Dynamic wind vector with gentle turbulence
+  const windAngle = t * 0.15;
+  const windSpeed = 1.8 + 0.4 * Math.sin(t * 0.3);
+  const windDir = new THREE.Vector3(Math.cos(windAngle), 0, Math.sin(windAngle)).normalize();
+  const wind2D = { x: windDir.x * windSpeed, z: windDir.z * windSpeed };
+
+  // Calculate burn progress from phase (0 = green/pre, 0.65 = burning, 1.0 = charred/post)
+  let burnProgress = 0.0;
+  let fireIntensity = 0.0;
+  if (phase === 'during') {
+    burnProgress = 0.65;
+    fireIntensity = k && typeof k.fire === 'number' ? k.fire : 1.0;
+  } else if (phase === 'post') {
+    burnProgress = 1.0;
+    fireIntensity = 0.0;
+  } else {
+    burnProgress = 0.0;
+    fireIntensity = 0.0;
   }
-  s.geometry.attributes.position.needsUpdate = true;
+
+  // Sensible Heat (SH) for convective ember lofting
+  let shValue = 100.0;
+  let aodValue = 1.2;
+  if (site && site.values && site.values[phase]) {
+    shValue = site.values[phase].SH ?? 100.0;
+    aodValue = site.values[phase].AOD ?? 1.2;
+  } else if (k && typeof k.aod === 'number') {
+    aodValue = 0.4 + k.aod * 1.0;
+  }
+
+  // 1. Update Stratigraphy Soil Block
+  if (world.stratBlock && typeof world.stratBlock.update === 'function') {
+    const explodeVal = world.stratigraphy ? world.stratigraphy.getExplode() : 0.0;
+    world.stratBlock.update(t, phase, explodeVal);
+  }
+
+  // 2. Update Realistic Forest Canopy (wind sway & SSS)
+  if (world.forest && typeof world.forest.update === 'function') {
+    world.forest.update(t, windSpeed, windDir, burnProgress);
+  }
+
+  // 3. Update Understory Ladder Fuels
+  if (world.understory && typeof world.understory.update === 'function') {
+    world.understory.update(t, burnProgress);
+  }
+
+  // 4. Update Surface Litter Bed
+  if (world.litter && typeof world.litter.update === 'function') {
+    world.litter.update(burnProgress);
+  }
+
+  // 5. Update 3D GPU Raymarched Volumetric Fire
+  if (world.fire) {
+    if (fireIntensity > 0.01) {
+      world.fire.mesh.visible = true;
+      world.fire.update(t, { x: wind2D.x * 0.4, y: 0.0, z: wind2D.z * 0.4 }, fireIntensity, cameraPos);
+    } else {
+      world.fire.mesh.visible = false;
+    }
+  }
+
+  // 6. Update Buoyant Cooling Embers
+  if (world.embers) {
+    if (fireIntensity > 0.01) {
+      world.embers.mesh.visible = true;
+      world.embers.update(safeDt, t, wind2D, fireIntensity, shValue);
+    } else {
+      world.embers.mesh.visible = false;
+    }
+  }
+
+  // 7. Update Aerodynamic Convective Smoke Plume
+  if (world.smoke) {
+    world.smoke.update(safeDt, t, wind2D, aodValue);
+  }
+
+  // 8. Update Atmosphere-Biosphere Flux Coupling Vector Arrows
+  if (world.flux && typeof world.flux.update === 'function') {
+    world.flux.update(site, phase, t);
+    if (variable) {
+      world.flux.setVariableFocus(variable);
+    }
+  }
+
+  // 9. Update Stratigraphy Spring-Damper Physics Engine
+  if (world.stratigraphy && typeof world.stratigraphy.update === 'function') {
+    world.stratigraphy.update(safeDt);
+  }
 }
 
-// Phase-dependent terrain colours: green -> embers in burn zone (during) -> charred (post).
+/**
+ * Update phase state across soil, forest, duff, and fire subsystems.
+ */
 export function colorTerrain(world, phase) {
-  const g = world.terrain.geometry, p = g.attributes.position, col = g.attributes.color, b = world.burn;
-  const c = new THREE.Color(), green = new THREE.Color(0x3b5d2a), burnt = new THREE.Color(0x2b1d14), ember = new THREE.Color(0xff4500);
-  for (let i = 0; i < p.count; i++) {
-    const x = p.getX(i), z = p.getZ(i), inside = Math.hypot(x - b.x, z - b.z) < b.r + Math.sin(x * 1.3 + z) * 0.6;
-    c.copy(green).offsetHSL(0, 0, p.getY(i) * 0.03);
-    if (inside && phase === 'during') c.lerpColors(burnt, ember, 0.3 + Math.random() * 0.5);
-    else if (inside && phase === 'post') c.copy(burnt);
-    col.setXYZ(i, c.r, c.g, c.b);
+  if (world.stratBlock && typeof world.stratBlock.setPhase === 'function') {
+    world.stratBlock.setPhase(phase);
   }
-  col.needsUpdate = true;
-  if (world.trees) world.trees.visible = true;
 }
-// Arrow grid: length ~ normalized magnitude s (0..1), direction from variable meta, colour per variable.
-export function setArrows(world, s, dir, color) {
-  const v = new THREE.Vector3(0, dir === 'down' ? -1 : 1, 0), c = new THREE.Color(color || '#ffffff');
-  world.arrows.forEach(a => { a.setDirection(v); a.setLength(0.3 + 2.5 * s, 0.35, 0.22); a.setColor(c);
-    a.position.y = a.userData.base + (dir === 'down' ? 0.3 + 2.5 * s : 0); });
+
+/**
+ * Configure flux vector arrows focus and color.
+ */
+export function setArrows(world, s, dir, color, variableName = null) {
+  if (world.flux && typeof world.flux.setVariableFocus === 'function') {
+    world.flux.setVariableFocus(variableName || 'SH');
+  }
 }
-// Explode factor e (0..1) lifts the layers apart and drops the terrain.
+
+/**
+ * Drive the StratigraphyController vertical axial explosion.
+ */
 export function applyExplode(world, e) {
-  world.layers?.forEach((m, i) => { m.position.y = m.userData.base + e * (i + 1) * 2.5; m.material.opacity = 0.12 + e * 0.13; });
-  world.terrain.position.y = world.trees.position.y = -e * 2;
+  if (world.stratigraphy && typeof world.stratigraphy.setExplodeTarget === 'function') {
+    world.stratigraphy.setExplodeTarget(e);
+  }
 }

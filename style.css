@@ -1,16 +1,507 @@
-html,body{margin:0;height:100%;overflow:hidden;background:#0b0f14;color:#e6edf3;font:14px system-ui,sans-serif}
-#scene{position:fixed;inset:0;width:100%;height:100%}
-#hud{position:fixed;top:12px;left:12px;width:320px;background:#0d1117cc;border:1px solid #30363d;border-radius:10px;padding:10px}
-h1{font-size:16px;margin:0 0 6px}
-select,button{background:#161b22;color:#e6edf3;border:1px solid #30363d;border-radius:6px;padding:4px 8px}
-.badge{margin-left:6px;font-size:11px;background:#9e6a03;padding:2px 6px;border-radius:4px}
-#timeline,#vars{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0}
-#timeline button.on,#vars button.on{background:#1f6feb}
-#note{font-size:12px;color:#8b949e;margin:4px 0 0}
-#cam{position:fixed;right:12px;bottom:12px;width:240px;background:#0d1117cc;border:1px solid #30363d;border-radius:10px;padding:8px}
-#video{width:100%;transform:scaleX(-1);border-radius:6px;display:none}
-#gesture{font-size:12px;margin:6px 0}
-small{color:#8b949e}
-#phaseVar{font-weight:600;margin:4px 0}
-.warn{color:#ffb347;font-size:12px;margin:4px 0}
-#explodeBtn{margin:4px 0}
+:root {
+  --bg-dark: #05080e;
+  --bg-surface: rgba(11, 17, 28, 0.76);
+  --bg-surface-elevated: rgba(18, 28, 44, 0.88);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-active: rgba(56, 139, 253, 0.5);
+  --accent-blue: #388bfd;
+  --accent-cyan: #00d2ff;
+  --accent-orange: #ff5722;
+  --accent-green: #3fb950;
+  --text-primary: #f0f6fc;
+  --text-secondary: #8b949e;
+  --text-muted: #6e7681;
+  --glass-blur: 16px;
+  --radius-pill: 9999px;
+  --radius-card: 14px;
+  --shadow-glass: 0 10px 36px 0 rgba(0, 0, 0, 0.5);
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#scene {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100dvh;
+  display: block;
+  touch-action: none;
+  z-index: 1;
+}
+
+/* Glassmorphism Classes */
+.glass-pill {
+  background: var(--bg-surface);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-glass);
+}
+
+.glass-card {
+  background: var(--bg-surface);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-glass);
+}
+
+/* Top Floating Header Pill */
+#topPill {
+  position: fixed;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  max-width: calc(100vw - 24px);
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+}
+#topPill::-webkit-scrollbar {
+  display: none;
+}
+
+.brand-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.brand-icon {
+  font-size: 16px;
+}
+
+select {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  outline: none;
+  cursor: pointer;
+}
+select option {
+  background: #0d131d;
+  color: #fff;
+}
+
+.badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  background: #9e6a03;
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.pill-buttons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pill-buttons button, .pill-btn {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pill-buttons button:hover, .pill-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text-primary);
+}
+
+.pill-buttons button.on {
+  background: var(--accent-blue);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 10px rgba(56, 139, 253, 0.4);
+}
+
+.action-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.icon-btn {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.icon-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Collapsible Research & Data Panel */
+#hud {
+  position: fixed;
+  top: 64px;
+  left: 14px;
+  width: 330px;
+  max-width: calc(100vw - 28px);
+  max-height: calc(100dvh - 190px);
+  overflow-y: auto;
+  z-index: 10;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+#hud.collapsed {
+  transform: translateX(-360px);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.card-header h2 {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--accent-cyan);
+}
+.close-btn {
+  width: 22px;
+  height: 22px;
+  font-size: 11px;
+}
+
+.warn {
+  color: #e3b341;
+  font-size: 11px;
+  line-height: 1.3;
+  padding: 4px 6px;
+  background: rgba(227, 179, 65, 0.1);
+  border-left: 2px solid #e3b341;
+  border-radius: 3px;
+}
+
+#chart {
+  width: 100%;
+  height: 120px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  display: block;
+}
+
+.scroll-note {
+  font-size: 11px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  margin: 0;
+}
+.scroll-note b {
+  color: var(--text-primary);
+}
+.scroll-note i {
+  color: var(--text-muted);
+}
+
+/* Stratum 3D Callout Card */
+#stratumCard {
+  position: fixed;
+  bottom: 108px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 12;
+  width: min(520px, calc(100vw - 28px));
+  padding: 12px 16px;
+  animation: slideUpFade 0.25s ease-out;
+}
+
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translate(-50%, 15px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.stratum-badge-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tier-badge {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  background: var(--accent-cyan);
+  color: #05080e;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+}
+.stratum-badge-group h3 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0;
+  color: #ffffff;
+}
+
+.stratum-desc {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  margin: 6px 0 8px;
+}
+
+.stratum-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 6px;
+}
+.metric-pill {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 4px 6px;
+  display: flex;
+  flex-direction: column;
+}
+.metric-name {
+  font-size: 9.5px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.metric-val {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Bottom Tactile Control Deck */
+#controlDeck {
+  position: fixed;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  width: min(580px, calc(100vw - 24px));
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.deck-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.row-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.8px;
+  color: var(--text-muted);
+  min-width: 48px;
+}
+
+.strata-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 1;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.strata-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.stratum-tab {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  padding: 5px 11px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+}
+.stratum-tab:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+.stratum-tab.on {
+  background: var(--accent-cyan);
+  color: #05080e;
+  border-color: transparent;
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(0, 210, 255, 0.4);
+}
+
+/* Scrubber Row */
+.scrubber-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.scrubber-label {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.scrubber-track-container {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+input[type="range"]#explodeSlider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.12);
+  outline: none;
+  cursor: pointer;
+  margin: 0;
+}
+
+input[type="range"]#explodeSlider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid var(--accent-cyan);
+  box-shadow: 0 0 8px rgba(0, 210, 255, 0.6);
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+input[type="range"]#explodeSlider::-webkit-slider-thumb:active {
+  transform: scale(1.25);
+  background: var(--accent-cyan);
+}
+
+input[type="range"]#explodeSlider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid var(--accent-cyan);
+  box-shadow: 0 0 8px rgba(0, 210, 255, 0.6);
+  cursor: pointer;
+}
+
+.explode-toggle-btn {
+  padding: 4px 10px;
+  font-size: 11px;
+}
+
+/* Cam Card */
+#cam {
+  position: fixed;
+  right: 14px;
+  bottom: 84px;
+  width: 220px;
+  z-index: 10;
+  padding: 10px;
+  display: none; /* Shown on camera enable */
+}
+#cam.active {
+  display: block;
+}
+#video {
+  width: 100%;
+  transform: scaleX(-1);
+  border-radius: 6px;
+  display: none;
+}
+#gesture {
+  font-size: 11px;
+  margin: 6px 0;
+  color: var(--text-secondary);
+}
+small {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+/* Responsive Breakpoints for Mobile */
+@media (max-width: 640px) {
+  #topPill {
+    top: 8px;
+    padding: 5px 10px;
+    gap: 6px;
+  }
+  .brand-group select {
+    max-width: 130px;
+  }
+  #controlDeck {
+    bottom: 8px;
+    padding: 8px 10px;
+    gap: 6px;
+  }
+  .row-label {
+    min-width: 40px;
+    font-size: 9px;
+  }
+  .stratum-tab {
+    padding: 4px 9px;
+    font-size: 10.5px;
+  }
+  #stratumCard {
+    bottom: 96px;
+    padding: 10px 12px;
+  }
+  #hud {
+    top: 54px;
+    left: 8px;
+    max-height: calc(100dvh - 170px);
+  }
+}
