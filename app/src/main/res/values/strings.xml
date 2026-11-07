@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Wildfire Flux Explorer</string>
+    <string name="title_similipal">Similipal Biosphere Reserve</string>
+    <string name="title_bandhavgarh">Bandhavgarh National Park</string>
+    <string name="title_chamba">Chamba Himalayan Forest</string>
+    <string name="phase_pre">Pre-Fire</string>
+    <string name="phase_during">During Fire</string>
+    <string name="phase_post">Post-Fire</string>
+    <string name="notice_example">EXAMPLE Data: UI Prototype Placeholder</string>
+</resources>
