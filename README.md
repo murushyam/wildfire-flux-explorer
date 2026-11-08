@@ -8,38 +8,59 @@
 Interactive hand-gesture controlled 3D visualization of wildfire impacts on atmosphere-biosphere fluxes.
 
 > 🚀 **Live Web App**: **[https://murushyam.github.io/wildfire-flux-explorer/](https://murushyam.github.io/wildfire-flux-explorer/)**  
-> Instant access in any modern browser. Supports real-time webcam hand tracking (MediaPipe) and full keyboard/mouse/touch fallbacks.
+> Instant access in any modern browser. Choose **📷 With Camera** (2-stage real-time hand & gesture detection via MediaPipe) or **🖱 Without Camera** (touch, mouse, keyboard, tactile control deck), plus **🎙 Voice Actions & Audio Briefing** (Web Speech Recognition & Text-to-Speech narration).
 
-Inspired by [takeapart.app](https://takeapart.app). Built for exploring pre-fire, during-fire, and post-fire phases of energy and environmental fluxes (SH, LH, ET, GPP, VPD, AOD) over Indian forest ecosystems (Similipal, Bandhavgarh, Chamba).
+Inspired by [takeapart.app](https://takeapart.app). Built for exploring pre-fire, during-fire, and post-fire phases of energy and environmental fluxes (SH, LH, ET, GPP, VPD, AOD) and 7 vertical ecosystem strata over Indian forest ecosystems (Similipal, Bandhavgarh, Chamba).
 
 > ⚠️ The numbers in `data/sites.json` are **EXAMPLE placeholders** for UI development, not observations. Published Similipal findings are shown separately in the HUD, with citations.
 
-## Concept
+## Concept & Features
 
-- **MediaPipe Hands** (Tasks Vision `HandLandmarker`): webcam hand tracking (21 landmarks), loaded only when you click *Enable hand tracking*.
-- **Gestures**:
-  | Gesture | Action |
+- **Dual Input Modes (`📷 With Camera` & `🖱 Without Camera`)**:
+  - **Without Camera (Default)**: Full 3D orbit/zoom, tactile bottom dissection scrubber, strata solo tabs, keyboard shortcuts, and voice control — zero camera overhead.
+  - **With Camera**: Activates a **2-Stage Hand & Gesture Detection Pipeline** powered by MediaPipe Tasks Vision (`HandLandmarker`):
+    1. **Stage 1 — Hand Detection**: Validates hand anatomy & bounding box (`detectHand`), displays live confidence %, renders a 21-point colour-coded skeleton overlay (with toggleable finger lines and front/rear camera flip), and updates a live **5-Finger Extension Matrix (`T I M R P`)**.
+    2. **Stage 2 — Gesture Classification**: Once a hand is locked, classifies and stabilizes multi-frame gestures (`GestureStabilizer`) with a visual stability progress bar before triggering 3D actions.
+- **Hand Gestures**:
+  | Gesture | Finger Pattern | Action |
+  |---|---|---|
+  | **Open Palm (Move / Hold)** | 5 fingers extended | Orbit 3D camera (hold still ~1 s to Explode / Assemble strata) |
+  | **Horizontal Swipe** | Rapid palm sweep left / right | Cycle ecological monitoring site (Similipal → Bandhavgarh → Chamba) |
+  | **Pinch / Spread** | Thumb + index distance | Scrub layer dissection (`TakeApart`) & zoom |
+  | **Peace Sign (`✌`)** | Index + middle extended | Cycle fire phase (`Pre` → `During` → `Post`) |
+  | **Three Fingers (`🤟`)** | Index + middle + ring | Cycle / solo vertical forest strata (Canopy, Understory, Litter, Duff, Soil, Flux) |
+  | **Point (`☝`)** | Index finger only | Cycle atmospheric flux variable (`GPP`, `ET`, `LH`, `SH`, `VPD`, `AOD`) |
+  | **Fist (`✊`)** | All fingers curled | Reset 3D camera & pause/resume particles |
+  | **Thumbs Up (`👍`)** | Thumb up, fingers curled | Toggle Zen / Clean full-screen view |
+  | **Rock / Horns (`🤘`)** | Index + pinky extended | Cycle Wind & Flame Boost (`1x` → `2x` → `3x` → `0.5x`) |
+  | **Call-Me / Shaka (`🤙`)** | Thumb + pinky extended | Speak scientific audio briefing aloud (TTS narration) |
+- **Voice Actions & Audio Briefing (`🎙 Voice`)**:
+  - **Speech Recognition**: Hands-free voice commands (including compound utterances like *"during fire and explode canopy"*) for switching camera modes, exploding/assembling strata, soloing layers, selecting phases/variables/sites, boosting wind, starting the auto-tour, or narrating data.
+  - **Interactive Fallback**: Text command input box + 14 one-tap quick action chips in the Voice Drawer (`V`) so every voice action works even without a microphone.
+  - **Scientific Audio Narration (`🔊 Narrate`)**: Reads site telemetry, active phase/flux values, and published Similipal research findings aloud using Web Speech Synthesis (`speechSynthesis`).
+- **Interactive Boost & Exploration Tools**:
+  - **🌬 Wind & Flame Boost (`W`)**: Cycles wind turbulence, tree sway, and flame/ember intensity (`1x`, `2x`, `3x`, `0.5x`).
+  - **🎬 Guided Auto-Tour (`T`)**: Automated scientific choreography that steps through Pre-Fire, During-Fire, Post-Fire, strata dissection, and solo layer callouts.
+  - **📸 3D Snapshot (`P`)**: Captures and downloads a timestamped PNG of the current 3D forest dissection view.
+  - **⚡ Light / Full Graphics Tiers**: Starts in **Light** mode by default for smooth mobile/laptop performance; toggle to **Full** for maximum foliage density and high-DPI rendering.
+- **Keyboard, Mouse & Touch Controls**:
+  | Action | Mouse / Touch / Keyboard |
   |---|---|
-  | Open palm, move | Orbit the scene |
-  | Open palm, fast horizontal swipe | Switch phase Pre / During / Post fire |
-  | Pinch (thumb–index), open/close | Zoom in / out |
-  | Point (index only), left↔right | Select flux variable |
-  | Open palm held still ~1 s | Explode / collapse the atmosphere layer stack (surface, boundary layer, free troposphere) |
-  | Fist | Pause / resume particles |
-- **Mouse/touch/keyboard fallback** (HUD buttons for everything):
-  | Action | Mouse / keyboard |
-  |---|---|
-  | Orbit | drag |
-  | Zoom | wheel / touch pinch, `+` / `-` |
+  | Orbit / Zoom | Drag / wheel / pinch, `+` / `-` |
+  | Input Mode | `C` (*With Camera* / *Without Camera* buttons) |
+  | Voice Drawer / Narrate | `V` (*Voice* drawer), `N` (*Narrate* TTS briefing) |
   | Phase | `←` / `→`, timeline buttons |
   | Variable | `1`–`6`, variable buttons |
-  | Explode / collapse layers | `E`, *Explode* button |
-  | Next site | `S`, site selector |
-  | Start hand tracking | `C`, *Enable hand tracking* |
-  | Pause particles | space |
-- **Visuals**: procedural terrain + instanced forest per site; particle systems for fire (during phase, scaled by SH), smoke (density ∝ AOD), upward flux particles (LH/ET/SH) and downward carbon uptake (GPP).
-- **Layers & arrows**: explodable atmosphere stack; flux-arrow grid whose length (normalized across sites/phases), direction (`direction`) and colour (`color`) follow the selected variable and phase; terrain recolours by phase inside the site's `burn_zone` (green → embers → charred).
-- **HUD**: phase · variable line, EXAMPLE-data warning, site selector, phase timeline, variable panel, bar chart across phases, published findings with sources.
+  | Explode / Dissect Layers | `E`, *TakeApart* button, or slider (`0`–`100%`) |
+  | Solo Stratum | Strata tabs (*All*, *Canopy*, *Understory*, *Litter*, *Duff*, *Soil*, *Flux*) |
+  | Next Site | `S`, site selector |
+  | Wind & Flame Boost | `W`, *Wind* button |
+  | Guided Auto-Tour | `T`, *Auto-Tour* button |
+  | 3D PNG Snapshot | `P`, *Snapshot* button |
+  | Zen View / Gesture Guide | `Z` (*Zen* button), `G` (*Guide* modal) |
+  | Pause Particles | `Space` |
+- **Visuals**: Procedural terrain + 7-stratum take-apart forest architecture (Atmospheric Boundary Layer, Overstory Crown, Understory & Trunks, Surface Litter, Organic Duff, Mineral Soil & Roots); custom GLSL volumetric flames, curling smoke plumes, wind streaks, and 3D flux ribbons.
+- **HUD & Panels**: All panels (Header Pill, Science & Chart HUD, Voice Drawer, Control Deck, Camera Detector, Stratum Callout) support minimize/collapse and full-screen Zen Mode.
 - See [docs/CONCEPT.md](docs/CONCEPT.md).
 
 ## Variables and units
@@ -69,7 +90,7 @@ Key papers:
 No installation or build required. Run directly in your web browser:
 👉 **[https://murushyam.github.io/wildfire-flux-explorer/](https://murushyam.github.io/wildfire-flux-explorer/)**
 
-Click *Enable hand tracking* and allow camera access. Hand tracking runs 100% locally on your machine via MediaPipe; video frames never leave your device. All features can also be controlled with mouse, keyboard, or touch.
+Click **📷 With Camera** (or *📷 Start Camera Detection*) and allow camera access to enable 2-stage hand and gesture tracking, or stay in **🖱 Without Camera** mode to use mouse, touch, keyboard, or **🎙 Voice** actions. Hand tracking runs 100% locally on your device via MediaPipe; video frames never leave your machine.
 
 ### 2. Local Web Server
 ES modules need a local server (opening `index.html` via `file://` will not load them):

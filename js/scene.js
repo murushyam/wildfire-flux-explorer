@@ -110,6 +110,7 @@ export function makeWorld(scene, renderer = null) {
     smoke: null,
     flux: null,
     site: null,
+    windMultiplier: 1.0,
     burn: { x: 1.5, z: -1.0, r: 4.5 },
     H: (x, z) => 0
   };
@@ -337,9 +338,10 @@ export function updateSystems(world, k, dt, time = 0, options = {}) {
   const variable = options.variable || 'SH';
   const cameraPos = options.cameraPos || null;
 
-  // Dynamic wind vector with gentle turbulence
+  // Dynamic wind vector with gentle turbulence & boost multiplier
+  const windMult = options.windMultiplier ?? world.windMultiplier ?? 1.0;
   const windAngle = t * 0.15;
-  const windSpeed = 1.8 + 0.4 * Math.sin(t * 0.3);
+  const windSpeed = (1.8 + 0.4 * Math.sin(t * 0.3)) * windMult;
   const windDir = new THREE.Vector3(Math.cos(windAngle), 0, Math.sin(windAngle)).normalize();
   const wind2D = { x: windDir.x * windSpeed, z: windDir.z * windSpeed };
 
@@ -482,4 +484,13 @@ export function applyPerfTier(world, mode = 'light') {
   if (world.smoke && typeof world.smoke.setMaxActive === 'function') {
     world.smoke.setMaxActive(isLight ? 120 : 320);
   }
+}
+
+/**
+ * Adjust wind speed & flame tilt multiplier (e.g. 0.5x Calm, 1.0x Normal, 2.0x Gale, 3.0x Firestorm).
+ */
+export function setWindMultiplier(world, mult = 1.0) {
+  if (!world) return 1.0;
+  world.windMultiplier = Math.max(0.2, Math.min(4.0, Number(mult) || 1.0));
+  return world.windMultiplier;
 }

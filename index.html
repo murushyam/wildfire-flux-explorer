@@ -28,24 +28,32 @@
   <div class="var-group">
     <div id="vars" class="pill-buttons"></div>
   </div>
+  <!-- Explicit With Camera / Without Camera Options -->
+  <div id="camModeGroup" class="pill-buttons cam-mode-group" role="group" aria-label="Input Mode Selection">
+    <button id="withCamBtn" class="cam-mode-btn" title="With Camera: Detect Hand & Gestures via Camera (C)">📷 With Camera</button>
+    <button id="withoutCamBtn" class="cam-mode-btn on" title="Without Camera: Touch, Mouse, Virtual Deck & Voice">🖱 Without Camera</button>
+  </div>
   <div class="action-group">
+    <button id="voiceToggleBtn" class="pill-btn voice-toggle-btn" title="Voice Actions & Audio Briefing (V)">
+      <span id="voiceIcon">🎙</span> <span id="voiceLabel">Voice</span>
+    </button>
     <button id="perfToggleBtn" class="pill-btn perf-toggle-btn" title="Toggle Graphics Tier: Light (Default) vs Full">
       <span id="perfIcon">⚡</span> <span id="perfLabel">Light</span>
     </button>
     <button id="zenBtn" class="icon-btn" title="Toggle Zen / Clean View (Z)">👁</button>
-    <button id="gestureGuideBtn" class="icon-btn" title="Hand & Touch Gesture Guide">🖐</button>
+    <button id="gestureGuideBtn" class="icon-btn" title="Hand Gesture & Voice Command Guide (G)">🖐</button>
     <button id="hudToggleBtn" class="icon-btn" title="Toggle Science & Chart Panel">📊</button>
     <button id="resetCamBtn" class="icon-btn" title="Reset 3D Camera">🎥</button>
     <button id="topPillMinBtn" class="icon-btn minimize-btn" title="Minimize Header">▲</button>
   </div>
 </header>
 
-<!-- Real-time Gesture Feedback Status Pill -->
+<!-- Real-time Gesture & Voice Feedback Status Pill -->
 <div id="gestureStatusPill" class="glass-pill gesture-status-pill">
-  <span id="gesturePillIcon" class="gesture-pill-icon">🖐</span>
-  <span id="gesturePillName" class="gesture-pill-name">Ready</span>
+  <span id="gesturePillIcon" class="gesture-pill-icon">🖱</span>
+  <span id="gesturePillName" class="gesture-pill-name">Without Camera</span>
   <span class="gesture-pill-divider">:</span>
-  <span id="gesturePillAction" class="gesture-pill-action">Show hand to control</span>
+  <span id="gesturePillAction" class="gesture-pill-action">Touch/Mouse active · Tap "With Camera" or "Voice"</span>
 </div>
 
 <!-- Floating Exit Zen Mode Button -->
@@ -58,6 +66,7 @@
   <div class="card-header">
     <h2 id="phaseVar">Similipal Biosphere Reserve</h2>
     <div class="header-actions">
+      <button id="narrateHudBtn" class="pill-btn mini-btn" title="Read Scientific Findings Aloud (TTS)">🔊 Narrate</button>
       <button id="hudMinBtn" class="icon-btn minimize-btn" title="Minimize Panel">▼</button>
       <button id="hudCloseBtn" class="icon-btn close-btn" title="Close Panel">✕</button>
     </div>
@@ -68,6 +77,49 @@
     <div id="note" class="scroll-note"></div>
   </div>
 </aside>
+
+<!-- Voice Actions & Speech Assistant Drawer -->
+<section id="voicePanel" class="glass-card voice-panel" style="display: none;">
+  <div class="card-header">
+    <div class="cam-title-group">
+      <span id="voicePanelDot" class="voice-status-dot"></span>
+      <span class="cam-title">Voice Actions & Audio Briefing</span>
+    </div>
+    <div class="header-actions">
+      <button id="voiceListenBtn" class="pill-btn mini-btn voice-mic-btn" title="Start / Stop Microphone Listening">🎙 Start Mic</button>
+      <button id="voiceSpeakBtn" class="pill-btn mini-btn" title="Speak Scientific Site & Flux Summary">🔊 Narrate</button>
+      <button id="voiceMinBtn" class="icon-btn minimize-btn" title="Minimize Voice Panel">▼</button>
+      <button id="voiceCloseBtn" class="icon-btn close-btn" title="Close Voice Panel">✕</button>
+    </div>
+  </div>
+  <div id="voiceBody" class="voice-body">
+    <div id="voiceTranscriptBox" class="voice-transcript-box">
+      <span id="voiceStateBadge" class="voice-state-badge">READY</span>
+      <span id="voiceTranscriptText" class="voice-transcript-text">Say "With camera", "Explode", "During fire", "Solo canopy", or "Wind boost"</span>
+    </div>
+    <div class="voice-input-row">
+      <input type="text" id="voiceTextInput" class="voice-text-input" placeholder="Type or speak any command (e.g., explode, during fire, wind boost)…" />
+      <button id="voiceRunBtn" class="pill-btn mini-btn on">Run</button>
+    </div>
+    <div class="voice-chips-label">Instant Voice / Action Triggers:</div>
+    <div id="voiceQuickChips" class="voice-chips">
+      <button data-voice="with camera" class="voice-chip">📷 With Camera</button>
+      <button data-voice="without camera" class="voice-chip">🖱 Without Camera</button>
+      <button data-voice="explode" class="voice-chip">💥 Explode</button>
+      <button data-voice="assemble" class="voice-chip">🌲 Assemble</button>
+      <button data-voice="pre fire" class="voice-chip">🌿 Pre-Fire</button>
+      <button data-voice="during fire" class="voice-chip">🔥 During Fire</button>
+      <button data-voice="post fire" class="voice-chip">🌱 Post-Fire</button>
+      <button data-voice="canopy" class="voice-chip">🌳 Canopy</button>
+      <button data-voice="litter" class="voice-chip">🍂 Litter</button>
+      <button data-voice="duff" class="voice-chip">🟫 Duff</button>
+      <button data-voice="soil" class="voice-chip">🪨 Soil</button>
+      <button data-voice="wind boost" class="voice-chip">🌬 Wind Boost</button>
+      <button data-voice="start tour" class="voice-chip">🎬 Auto-Tour</button>
+      <button data-voice="narrate" class="voice-chip">🔊 Narrate</button>
+    </div>
+  </div>
+</section>
 
 <!-- Stratum 3D Callout Card (Appears on Solo or Tap) -->
 <div id="stratumCard" class="glass-card stratum-card" style="display: none;">
@@ -92,9 +144,14 @@
   <div class="deck-header">
     <div class="deck-title-group">
       <span class="deck-icon">🎛</span>
-      <span class="deck-title">LAYERS & DISSECTION</span>
+      <span class="deck-title">LAYERS, DISSECTION & BOOST CONTROLS</span>
     </div>
-    <button id="deckMinBtn" class="icon-btn minimize-btn" title="Minimize Control Deck">▼</button>
+    <div class="deck-header-actions">
+      <button id="windBoostBtn" class="pill-btn mini-btn" title="Cycle Wind & Flame Boost (W / Rock Gesture)">🌬 Wind: 1x</button>
+      <button id="tourToggleBtn" class="pill-btn mini-btn" title="Toggle Automated Scientific Dissection Tour (T)">🎬 Auto-Tour</button>
+      <button id="snapshotBtn" class="pill-btn mini-btn" title="Capture 3D Forest Snapshot (P)">📸 Snapshot</button>
+      <button id="deckMinBtn" class="icon-btn minimize-btn" title="Minimize Control Deck">▼</button>
+    </div>
   </div>
   <div id="deckBody" class="deck-body">
     <!-- Stratum Quick-Selector Tabs -->
@@ -124,38 +181,68 @@
   </div>
 </footer>
 
-<!-- MediaPipe Hand Tracking Overlay -->
+<!-- MediaPipe 2-Stage Hand & Gesture Detection Overlay -->
 <div id="cam" class="glass-card cam-card">
   <div class="card-header cam-header">
     <div class="cam-title-group">
-      <span class="cam-icon">🖐</span>
-      <span class="cam-title">Hand Tracking</span>
+      <span class="cam-icon">📷</span>
+      <span class="cam-title">Hand & Gesture Detector</span>
     </div>
     <div class="cam-actions">
-      <button id="toggleSkeletonBtn" class="pill-btn mini-btn" title="Toggle Finger Detection Lines">🦴 Skeleton: ON</button>
+      <button id="toggleSkeletonBtn" class="pill-btn mini-btn on" title="Toggle Finger Detection Lines">🦴 Skeleton: ON</button>
+      <button id="flipCamBtn" class="icon-btn mini-icon-btn" title="Flip Front/Rear Camera">🔄</button>
       <button id="camMinBtn" class="icon-btn minimize-btn" title="Minimize Camera">▼</button>
-      <button id="camCloseBtn" class="icon-btn close-btn" title="Close Camera">✕</button>
+      <button id="camCloseBtn" class="icon-btn close-btn" title="Switch to Without Camera">✕</button>
     </div>
   </div>
   <div id="camBody" class="cam-body">
+    <!-- Stage 1: Hand Detection Status & 5-Finger Indicator Matrix -->
+    <div class="detection-pipeline">
+      <div class="pipeline-step" id="stage1Step">
+        <span class="step-tag">STEP 1 · HAND</span>
+        <span id="handDetectStatus" class="step-val">Waiting for camera…</span>
+      </div>
+      <div id="fingerMatrix" class="finger-matrix" title="Live 5-Finger Extension Detector">
+        <span data-finger="thumb" class="finger-pill">T</span>
+        <span data-finger="index" class="finger-pill">I</span>
+        <span data-finger="middle" class="finger-pill">M</span>
+        <span data-finger="ring" class="finger-pill">R</span>
+        <span data-finger="pinky" class="finger-pill">P</span>
+      </div>
+      <!-- Stage 2: Gesture Classification & Stability Bar -->
+      <div class="pipeline-step" id="stage2Step">
+        <span class="step-tag">STEP 2 · GESTURE</span>
+        <span id="gestureDetectStatus" class="step-val">Show hand first</span>
+      </div>
+      <div class="stability-track">
+        <div id="gestureStabilityFill" class="stability-fill"></div>
+      </div>
+    </div>
+
     <div class="video-container" id="videoContainer">
       <video id="video" playsinline muted></video>
       <canvas id="skeletonCanvas"></canvas>
     </div>
-    <button id="camBtn" class="pill-btn cam-toggle-btn">🖐 Enable Hand Tracking</button>
-    <p id="gesture">Touch: drag = orbit, 2-finger = zoom/pan. Keys: E = explode, ←/→ = phase, 1–6 = var, Z = Zen</p>
-    <small>Camera processed locally in browser. No upload.</small>
+    <div class="cam-btn-row">
+      <button id="camBtn" class="pill-btn cam-toggle-btn">📷 Start Camera Detection</button>
+      <button id="switchNoCamBtn" class="pill-btn mini-btn" title="Stop Camera & Use Touch/Mouse">🖱 Without Camera</button>
+    </div>
+    <p id="gesture">Step 1: Hold palm in view to lock hand. Step 2: Form gesture to control 3D scene.</p>
+    <small>Processed 100% locally on device. Zero video upload.</small>
   </div>
 </div>
 
-<!-- Visual Gesture Guidance Modal -->
+<!-- Visual Hand Gesture & Voice Command Guide Modal -->
 <div id="gestureGuideModal" class="glass-card gesture-guide-modal" style="display: none;">
   <div class="card-header">
     <div class="modal-title-group">
       <span class="guide-icon">🖐</span>
-      <h3>Hand & Touch Gesture Guide</h3>
+      <h3>Hand Gesture, Touch & Voice Action Guide</h3>
     </div>
     <button id="guideCloseBtn" class="icon-btn close-btn" title="Close Guide">✕</button>
+  </div>
+  <div class="guide-section-subtitle">
+    <strong>2-Stage Camera Pipeline:</strong> First hold your hand in view until <em>Step 1: Hand Detected</em> turns green, then perform any gesture below:
   </div>
   <div class="guide-grid">
     <div class="gesture-tile">
@@ -221,6 +308,24 @@
       </div>
       <span class="gesture-badge">Zen View</span>
     </div>
+    <div class="gesture-tile bonus-gesture-tile">
+      <div class="gesture-visual">🤘</div>
+      <div class="gesture-meta">
+        <span class="gesture-title">Rock / Horns Sign</span>
+        <span class="gesture-trigger">Index + Pinky Extended</span>
+        <span class="gesture-action">Cycle Wind & Flame Boost (1x → 2x → 3x → 0.5x)</span>
+      </div>
+      <span class="gesture-badge">Wind Boost</span>
+    </div>
+    <div class="gesture-tile bonus-gesture-tile">
+      <div class="gesture-visual">🤙</div>
+      <div class="gesture-meta">
+        <span class="gesture-title">Call-Me / Shaka</span>
+        <span class="gesture-trigger">Thumb + Pinky Extended</span>
+        <span class="gesture-action">Speak Scientific Audio Briefing (TTS)</span>
+      </div>
+      <span class="gesture-badge">Voice Narrate</span>
+    </div>
     <div class="gesture-tile">
       <div class="gesture-visual">↔🖐</div>
       <div class="gesture-meta">
@@ -230,6 +335,10 @@
       </div>
       <span class="gesture-badge">Sites</span>
     </div>
+  </div>
+
+  <div class="guide-section-subtitle" style="margin-top: 14px;">
+    <strong>🎙 Voice Actions (Tap "Voice" or press V):</strong> Say <em>"With camera"</em>, <em>"Without camera"</em>, <em>"Explode"</em>, <em>"Assemble"</em>, <em>"Pre fire"</em>, <em>"During fire"</em>, <em>"Post fire"</em>, <em>"Canopy"</em>, <em>"Litter"</em>, <em>"Duff"</em>, <em>"Soil"</em>, <em>"Sensible heat"</em>, <em>"Wind boost"</em>, <em>"Start tour"</em>, or <em>"Narrate"</em>.
   </div>
 </div>
 

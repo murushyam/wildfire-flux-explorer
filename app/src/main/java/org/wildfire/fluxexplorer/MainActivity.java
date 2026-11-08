@@ -184,6 +184,15 @@ public class MainActivity extends Activity {
                             }
                             return;
                         }
+                        if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resource)) {
+                            if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
+                                request.grant(new String[]{PermissionRequest.RESOURCE_AUDIO_CAPTURE});
+                            } else {
+                                pendingPermissionRequest = request;
+                                requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, CAMERA_PERMISSION_REQUEST_CODE);
+                            }
+                            return;
+                        }
                     }
                     request.grant(request.getResources());
                 });
@@ -202,7 +211,7 @@ public class MainActivity extends Activity {
         if (requestCode == CAMERA_PERMISSION_REQUEST_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 if (pendingPermissionRequest != null) {
-                    pendingPermissionRequest.grant(new String[]{PermissionRequest.RESOURCE_VIDEO_CAPTURE});
+                    pendingPermissionRequest.grant(pendingPermissionRequest.getResources());
                     pendingPermissionRequest = null;
                 }
             } else {
@@ -210,7 +219,7 @@ public class MainActivity extends Activity {
                     pendingPermissionRequest.deny();
                     pendingPermissionRequest = null;
                 }
-                Toast.makeText(this, "Camera permission is required for hand tracking", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, "Using Without-Camera / Touch mode. Grant permission anytime for Camera or Voice.", Toast.LENGTH_SHORT).show();
             }
         }
     }

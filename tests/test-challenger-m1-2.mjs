@@ -404,6 +404,12 @@ console.log('\n=== SUITE 4: Memory Leaks & Allocation Cycles ===');
 
 // Test 4.1: Texture Caching Efficiency (1000 calls without force)
 {
+  // Warm up all 4 texture caches so cold initial allocation is not counted against cached retrieval
+  generateBarkTextures();
+  generateFoliageTexture();
+  generateLitterTexture();
+  generateStratigraphyTexture();
+
   const startMem = process.memoryUsage().heapUsed;
   for (let i = 0; i < 1000; i++) {
     generateBarkTextures();
@@ -535,3 +541,4 @@ const passed = results.filter(r => r.passed).length;
 const failed = total - passed;
 console.log(`TOTAL TESTS: ${total} | PASSED: ${passed} | FAILED: ${failed}`);
 console.log('======================================================\n');
+if (failed > 0) process.exit(1);
