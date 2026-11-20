@@ -18,7 +18,11 @@ import {
   parseVoiceCommand,
   parseVoiceCommands,
   buildNarrationScript,
-  VOICE_COMMAND_GUIDE
+  VOICE_COMMAND_GUIDE,
+  speakText,
+  stopSpeaking,
+  setAudioMuted,
+  isAudioMuted
 } from '../js/voice-controller.js';
 import { createVolumetricFire, createEmbers, createSmokePlume } from '../js/volumetric-fire.js';
 import { applyPerfTier, setWindMultiplier } from '../js/scene.js';
@@ -425,8 +429,26 @@ it('parseVoiceCommand() parses dissection, phases, strata, variables, sites & bo
   assert.equal(parseVoiceCommand('wind boost').intent, 'setWindBoost');
   assert.equal(parseVoiceCommand('start tour').intent, 'setTour');
   assert.equal(parseVoiceCommand('narrate findings').intent, 'narrate');
+  assert.equal(parseVoiceCommand('stop').intent, 'stopNarration');
+  assert.equal(parseVoiceCommand('stop audio').intent, 'stopNarration');
+  assert.equal(parseVoiceCommand('stop simulation').intent, 'setPaused');
+  assert.equal(parseVoiceCommand('stop auto tour').intent, 'setTour');
+  assert.equal(parseVoiceCommand('stop auto tour').param, false);
+  assert.equal(parseVoiceCommand('mute').intent, 'setMuted');
+  assert.equal(parseVoiceCommand('mute').param, true);
+  assert.equal(parseVoiceCommand('unmute').intent, 'setMuted');
+  assert.equal(parseVoiceCommand('unmute').param, false);
   assert.equal(parseVoiceCommand('full mode').param, 'full');
   assert.equal(parseVoiceCommand('light mode').param, 'light');
+});
+
+it('speakText() is a no-op when muted and stopSpeaking() is safe without a window', () => {
+  stopSpeaking();
+  setAudioMuted(true);
+  assert.equal(isAudioMuted(), true);
+  assert.equal(speakText('This should not throw or speak'), false);
+  setAudioMuted(false);
+  assert.equal(isAudioMuted(), false);
 });
 
 it('parseVoiceCommand() handles empty, null, or unrecognized phrases safely', () => {

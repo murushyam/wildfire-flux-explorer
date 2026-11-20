@@ -3,7 +3,24 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no" />
-<title>Wildfire Flux Explorer — TakeApart 3D Dissection</title>
+<title>Wildfire Flux Explorer — Interactive 3D Wildfire Flux Visualization</title>
+<meta name="description" content="Interactive 3D visualization of pre-fire, during-fire, and post-fire energy and carbon fluxes plus drivers (GPP, ET, LH, SH, VPD, AOD) across forest strata in Indian ecosystems. Prototype with example UI data; published Similipal findings are shown with citations." />
+<link rel="canonical" href="https://murushyam.github.io/wildfire-flux-explorer/" />
+<meta name="theme-color" content="#05080e" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://murushyam.github.io/wildfire-flux-explorer/" />
+<meta property="og:title" content="Wildfire Flux Explorer — Interactive 3D Visualization" />
+<meta property="og:description" content="Explore pre-, during-, and post-fire energy and carbon fluxes plus drivers across Indian forest strata. Browser-based prototype; Similipal published findings cited separately from example UI data." />
+<meta property="og:image" content="https://murushyam.github.io/wildfire-flux-explorer/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="627" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Wildfire Flux Explorer — Interactive 3D Visualization" />
+<meta name="twitter:description" content="Explore pre-, during-, and post-fire energy and carbon fluxes plus drivers across Indian forest strata. Browser-based prototype with cited Similipal findings." />
+<meta name="twitter:image" content="https://murushyam.github.io/wildfire-flux-explorer/og-image.png" />
+<link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<link rel="icon" href="favicon.png" type="image/png" sizes="32x32" />
+<link rel="apple-touch-icon" href="apple-touch-icon.png" />
 <link rel="stylesheet" href="style.css" />
 <script type="importmap">
 { "imports": {
@@ -61,6 +78,12 @@
   <span>👁 Exit Zen View</span>
 </button>
 
+<!-- Always-visible Stop / Mute audio briefing controls (also shown in Zen view) -->
+<div id="audioDock" class="glass-pill audio-dock" role="group" aria-label="Audio briefing controls">
+  <button id="audioStopBtn" class="pill-btn mini-btn" type="button" title="Stop audio briefing (Esc)">⏹ Stop</button>
+  <button id="audioMuteBtn" class="pill-btn mini-btn" type="button" title="Mute audio briefing (M)">🔇 Mute</button>
+</div>
+
 <!-- Collapsible Research & Data Panel -->
 <aside id="hud" class="glass-card">
   <div class="card-header">
@@ -117,6 +140,8 @@
       <button data-voice="wind boost" class="voice-chip">🌬 Wind Boost</button>
       <button data-voice="start tour" class="voice-chip">🎬 Auto-Tour</button>
       <button data-voice="narrate" class="voice-chip">🔊 Narrate</button>
+      <button data-voice="stop" class="voice-chip">⏹ Stop audio</button>
+      <button data-voice="mute" class="voice-chip">🔇 Mute</button>
     </div>
   </div>
 </section>
@@ -164,7 +189,8 @@
         <button data-stratum="4" class="stratum-tab">Litter</button>
         <button data-stratum="5" class="stratum-tab">Duff</button>
         <button data-stratum="6" class="stratum-tab">Soil</button>
-        <button data-stratum="0" class="stratum-tab">Flux</button>
+        <button data-stratum="1" class="stratum-tab" title="Planetary boundary layer">PBL</button>
+        <button data-stratum="0" class="stratum-tab" title="Free troposphere and flux arrows">Flux</button>
       </div>
     </div>
 
@@ -338,7 +364,7 @@
   </div>
 
   <div class="guide-section-subtitle" style="margin-top: 14px;">
-    <strong>🎙 Voice Actions (Tap "Voice" or press V):</strong> Say <em>"With camera"</em>, <em>"Without camera"</em>, <em>"Explode"</em>, <em>"Assemble"</em>, <em>"Pre fire"</em>, <em>"During fire"</em>, <em>"Post fire"</em>, <em>"Canopy"</em>, <em>"Litter"</em>, <em>"Duff"</em>, <em>"Soil"</em>, <em>"Sensible heat"</em>, <em>"Wind boost"</em>, <em>"Start tour"</em>, or <em>"Narrate"</em>.
+    <strong>🎙 Voice Actions (Tap "Voice" or press V):</strong> Say <em>"With camera"</em>, <em>"Without camera"</em>, <em>"Explode"</em>, <em>"Assemble"</em>, <em>"Pre fire"</em>, <em>"During fire"</em>, <em>"Post fire"</em>, <em>"Canopy"</em>, <em>"Litter"</em>, <em>"Duff"</em>, <em>"Soil"</em>, <em>"Sensible heat"</em>, <em>"Wind boost"</em>, <em>"Start tour"</em>, or <em>"Narrate"</em>. Say <em>"Stop"</em> or press Esc to stop audio, or <em>"Mute"</em> / M to mute briefings.
   </div>
 </div>
 

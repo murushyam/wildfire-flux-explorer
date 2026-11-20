@@ -43,7 +43,7 @@ export const VOICE_COMMAND_GUIDE = [
     commands: [
       { phrase: '"Wind boost" / "Calm wind"', action: 'Boost or normalize wind speed & flame tilt' },
       { phrase: '"Start tour" / "Stop auto tour"', action: 'Automated 3D scientific dissection & phase tour' },
-      { phrase: '"Narrate" / "Stop speaking"', action: 'Speak research paper findings aloud (TTS)' },
+      { phrase: '"Narrate" / "Stop" / "Mute"', action: 'Speak, stop, or mute the audio briefing (Esc stops, M mutes)' },
       { phrase: '"Light mode" / "Full mode" / "Zen mode"', action: 'Switch graphics performance tier or clean view' }
     ]
   }
@@ -280,8 +280,27 @@ export function parseVoiceCommands(rawTranscript) {
   // -------------------------------------------------------------------------
   // 10. Audio Narration (TTS)
   // -------------------------------------------------------------------------
-  if (consumePhrases('stop speaking', 'stop narration', 'stop reading', 'be quiet', 'mute', 'silence', 'quiet')) {
-    pushAction('stopNarration', undefined, '🔇', 'Muted Narration', 'Stopped voice synthesis playback');
+  if (
+    consumePhrases(
+      'unmute audio', 'unmute', 'sound on', 'enable audio', 'audio on', 'unmute briefing'
+    )
+  ) {
+    pushAction('setMuted', false, '🔊', 'Audio Unmuted', 'Audio briefing enabled');
+  } else if (
+    consumePhrases(
+      'mute audio', 'mute briefing', 'mute', 'silence', 'be quiet', 'quiet'
+    )
+  ) {
+    pushAction('setMuted', true, '🔇', 'Audio Muted', 'Audio briefing muted');
+  }
+
+  if (
+    consumePhrases(
+      'stop speaking', 'stop narration', 'stop reading',
+      'stop audio briefing', 'stop audio', 'stop briefing'
+    )
+  ) {
+    pushAction('stopNarration', undefined, '⏹', 'Audio Stopped', 'Stopped voice synthesis playback');
   } else if (consumePhrases('narrate findings', 'read findings', 'audio briefing', 'tell me', 'explain this', 'narrate', 'explain', 'speak', 'briefing', 'summary')) {
     pushAction('narrate', undefined, '🔊', 'Scientific Briefing', 'Speaking site flux metrics & published research findings');
   }
@@ -343,6 +362,11 @@ export function parseVoiceCommands(rawTranscript) {
 
   if (consumePhrases('gesture guide', 'voice guide', 'show guide', 'show commands', 'help', 'guide', 'commands')) {
     pushAction('openGuide', undefined, '📖', 'Interaction Guide', 'Opened Hand Gesture & Voice Command Guide');
+  }
+
+  // Bare "stop" after more specific phrases such as "stop auto tour" or "stop simulation"
+  if (consumePhrases('stop')) {
+    pushAction('stopNarration', undefined, '⏹', 'Audio Stopped', 'Stopped voice synthesis playback');
   }
 
   return matchedActions;
@@ -443,15 +467,31 @@ export function buildNarrationScript(ctx = {}) {
   return text.trim();
 }
 
+/** Persistent mute flag for text-to-speech. Speech never starts while this is true. */
+let audioMuted = false;
+
+export function isAudioMuted() {
+  return audioMuted;
+}
+
+export function setAudioMuted(flag) {
+  audioMuted = Boolean(flag);
+  if (audioMuted) stopSpeaking();
+  return audioMuted;
+}
+
 /**
  * Speaks a text string using the browser's SpeechSynthesis API if available.
+ * Does nothing when muted, or when speech synthesis is unavailable.
+ * Callers should only invoke this from a user action (button, key, voice, or gesture).
  */
 export function speakText(text, options = {}) {
+  if (audioMuted || options.muted) return false;
   if (typeof window === 'undefined' || !('speechSynthesis' in window) || typeof SpeechSynthesisUtterance === 'undefined') {
     return false;
   }
   try {
-    window.speechSynthesis.cancel();
+    stopSpeaking();
     if (!text) return false;
     const utter = new SpeechSynthesisUtterance(text);
     utter.rate = options.rate || 1.02;
@@ -473,8 +513,21 @@ export function stopSpeaking() {
   if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
     try {
       window.speechSynthesis.cancel();
+      if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+        window.speechSynthesis.cancel();
+      }
     } catch (e) {
       // ignore
     }
+  }
+  if (typeof document !== 'undefined' && document.querySelectorAll) {
+    document.querySelectorAll('audio').forEach(el => {
+      try {
+        el.pause();
+        el.currentTime = 0;
+      } catch (e) {
+        // ignore
+      }
+    });
   }
 }

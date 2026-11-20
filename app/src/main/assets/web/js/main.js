@@ -22,7 +22,8 @@ import {
   parseVoiceCommand,
   buildNarrationScript,
   speakText,
-  stopSpeaking
+  stopSpeaking,
+  setAudioMuted
 } from './voice-controller.js';
 
 const PHASES = ['pre', 'during', 'post'];
@@ -60,7 +61,9 @@ const state = {
   tourTime: 0,
   // Voice Recognition state
   voiceListening: false,
-  speaking: false
+  speaking: false,
+  // Audio briefing mute (persisted). Speech never autoplays on load.
+  audioMuted: localStorage.getItem('wf_audio_muted') === 'true'
 };
 
 const $ = id => document.getElementById(id);
@@ -385,6 +388,7 @@ function updateStratumCalloutCard() {
         <span class="metric-name">Evaporative Frac (EF)</span>
         <span class="metric-val">${fluxes.evaporativeFraction || '—'}</span>
       </div>
+      ${state.data && state.data.is_example ? '<div class="stratum-example-note">Illustrative layer values — not observations. Published Similipal numbers are in the Science panel, with citations.</div>' : ''}
     `;
   }
 }
@@ -510,8 +514,53 @@ function captureSnapshot() {
   }
 }
 
+function updateAudioDock() {
+  const stopBtn = $('audioStopBtn');
+  const muteBtn = $('audioMuteBtn');
+  if (stopBtn) {
+    stopBtn.classList.toggle('on', Boolean(state.speaking));
+    stopBtn.setAttribute('aria-pressed', state.speaking ? 'true' : 'false');
+  }
+  if (muteBtn) {
+    muteBtn.classList.toggle('on', Boolean(state.audioMuted));
+    muteBtn.textContent = state.audioMuted ? '🔇 Muted' : '🔇 Mute';
+    muteBtn.title = state.audioMuted ? 'Unmute audio briefing (M)' : 'Mute audio briefing (M)';
+    muteBtn.setAttribute('aria-pressed', state.audioMuted ? 'true' : 'false');
+  }
+}
+
+function stopAudioBriefing(announce) {
+  stopSpeaking();
+  state.speaking = false;
+  updateAudioDock();
+  if (announce) {
+    updateGestureStatusPill('⏹', 'Audio Stopped', 'Stopped audio briefing', true);
+  }
+}
+
+function applyAudioMuted(flag, announce) {
+  state.audioMuted = Boolean(flag);
+  localStorage.setItem('wf_audio_muted', state.audioMuted ? 'true' : 'false');
+  setAudioMuted(state.audioMuted);
+  if (state.audioMuted) state.speaking = false;
+  updateAudioDock();
+  if (announce) {
+    updateGestureStatusPill(
+      state.audioMuted ? '🔇' : '🔊',
+      state.audioMuted ? 'Audio Muted' : 'Audio Unmuted',
+      state.audioMuted ? 'Briefings will stay silent until unmuted' : 'Audio briefing enabled',
+      true
+    );
+  }
+}
+
 function narrateCurrentState() {
   if (!state.data) return;
+  if (state.audioMuted) {
+    updateGestureStatusPill('🔇', 'Audio Muted', 'Unmute to hear the briefing', true);
+    updateAudioDock();
+    return;
+  }
   const s = site();
   const phaseKey = PHASES[state.phase];
   const varMeta = state.data.variables[state.variable] || { label: state.variable, unit: '' };
@@ -533,9 +582,11 @@ function narrateCurrentState() {
   const ok = speakText(script, {
     onEnd: () => {
       state.speaking = false;
+      updateAudioDock();
     }
   });
   state.speaking = ok;
+  updateAudioDock();
   if ($('voiceTranscriptText')) {
     $('voiceTranscriptText').textContent = `🔊 "${script}"`;
   }
@@ -894,8 +945,10 @@ function dispatchSingleVoiceAction(action) {
       narrateCurrentState();
       break;
     case 'stopNarration':
-      stopSpeaking();
-      state.speaking = false;
+      stopAudioBriefing(true);
+      break;
+    case 'setMuted':
+      applyAudioMuted(Boolean(action.param), true);
       break;
     case 'setPerfTier':
       applyPerfTier(action.param);
@@ -1073,6 +1126,12 @@ if ($('voiceSpeakBtn')) {
 if ($('narrateHudBtn')) {
   $('narrateHudBtn').onclick = () => narrateCurrentState();
 }
+if ($('audioStopBtn')) {
+  $('audioStopBtn').onclick = () => stopAudioBriefing(true);
+}
+if ($('audioMuteBtn')) {
+  $('audioMuteBtn').onclick = () => applyAudioMuted(!state.audioMuted, true);
+}
 if ($('voiceMinBtn')) {
   $('voiceMinBtn').onclick = () => {
     const p = $('voicePanel');
@@ -1248,6 +1307,7 @@ addEventListener('keydown', e => {
   else if (e.key === 't' || e.key === 'T') toggleAutoTour();
   else if (e.key === 'v' || e.key === 'V') $('voiceToggleBtn')?.click();
   else if (e.key === 'n' || e.key === 'N') narrateCurrentState();
+  else if (e.key === 'm' || e.key === 'M') applyAudioMuted(!state.audioMuted, true);
   else if (e.key === 'p' || e.key === 'P') captureSnapshot();
   else if (e.key === '+' || e.key === '=') zoomBy(0.05);
   else if (e.key === '-' || e.key === '_') zoomBy(-0.05);
@@ -1259,6 +1319,7 @@ addEventListener('keydown', e => {
   }
   else if (e.key === 'g' || e.key === 'G') $('gestureGuideBtn')?.click();
   else if (e.key === 'Escape' || e.key === '0') {
+    stopAudioBriefing(state.speaking);
     if ($('gestureGuideModal')?.style.display === 'block') {
       $('gestureGuideModal').style.display = 'none';
     } else if (state.zenMode) {
@@ -1400,7 +1461,7 @@ function handFrame(t) {
   if (g.name === 'three') {
     if (t - lastThreeT > 900) {
       lastThreeT = t;
-      const strataCycle = [-1, 2, 3, 4, 5, 6, 0];
+      const strataCycle = [-1, 2, 3, 4, 5, 6, 1, 0];
       const curIdx = strataCycle.indexOf(state.soloLayer);
       const nextStratum = strataCycle[(curIdx + 1) % strataCycle.length];
       setSoloStratum(nextStratum);
@@ -1543,6 +1604,11 @@ async function init() {
 
     // Sync initial skeleton toggle button state
     setSkeletonVisible(state.showSkeleton);
+
+    // Restore mute preference; do not start TTS on load
+    setAudioMuted(state.audioMuted);
+    state.speaking = false;
+    updateAudioDock();
 
     setSite(0);
     updateGestureStatusPill('🖱', 'Without Camera', 'Touch/Mouse active · Tap "With Camera" or "Voice"');

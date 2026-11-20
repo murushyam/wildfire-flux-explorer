@@ -8,7 +8,9 @@
 Interactive hand-gesture controlled 3D visualization of wildfire impacts on atmosphere-biosphere fluxes.
 
 > 🚀 **Live Web App**: **[https://murushyam.github.io/wildfire-flux-explorer/](https://murushyam.github.io/wildfire-flux-explorer/)**  
-> Instant access in any modern browser. Choose **📷 With Camera** (2-stage real-time hand & gesture detection via MediaPipe) or **🖱 Without Camera** (touch, mouse, keyboard, tactile control deck), plus **🎙 Voice Actions & Audio Briefing** (Web Speech Recognition & Text-to-Speech narration).
+> Instant access in any modern browser. Choose **📷 With Camera** (2-stage real-time hand & gesture detection via MediaPipe) or **🖱 Without Camera** (touch, mouse, keyboard, tactile control deck), plus **🎙 Voice Actions & Audio Briefing** (Web Speech Recognition & Text-to-Speech narration). A **⏹ Stop / 🔇 Mute** control stays on screen (Esc stops speech; M mutes; mute is remembered). Audio does not start until you ask for a briefing.
+
+![Wildfire Flux Explorer — Similipal pre-fire view with EXAMPLE data badge and cited published findings](docs/screenshot.png)
 
 Inspired by [takeapart.app](https://takeapart.app). Built for exploring pre-fire, during-fire, and post-fire phases of energy and environmental fluxes (SH, LH, ET, GPP, VPD, AOD) and 7 vertical ecosystem strata over Indian forest ecosystems (Similipal, Bandhavgarh, Chamba).
 
@@ -48,7 +50,7 @@ Inspired by [takeapart.app](https://takeapart.app). Built for exploring pre-fire
   |---|---|
   | Orbit / Zoom | Drag / wheel / pinch, `+` / `-` |
   | Input Mode | `C` (*With Camera* / *Without Camera* buttons) |
-  | Voice Drawer / Narrate | `V` (*Voice* drawer), `N` (*Narrate* TTS briefing) |
+  | Voice Drawer / Narrate | `V` (*Voice* drawer), `N` (*Narrate* TTS briefing), `Esc` (stop audio), `M` (mute / unmute) |
   | Phase | `←` / `→`, timeline buttons |
   | Variable | `1`–`6`, variable buttons |
   | Explode / Dissect Layers | `E`, *TakeApart* button, or slider (`0`–`100%`) |
@@ -59,7 +61,7 @@ Inspired by [takeapart.app](https://takeapart.app). Built for exploring pre-fire
   | 3D PNG Snapshot | `P`, *Snapshot* button |
   | Zen View / Gesture Guide | `Z` (*Zen* button), `G` (*Guide* modal) |
   | Pause Particles | `Space` |
-- **Visuals**: Procedural terrain + 7-stratum take-apart forest architecture (Atmospheric Boundary Layer, Overstory Crown, Understory & Trunks, Surface Litter, Organic Duff, Mineral Soil & Roots); custom GLSL volumetric flames, curling smoke plumes, wind streaks, and 3D flux ribbons.
+- **Visuals**: Procedural terrain + 7-layer take-apart architecture (Free Troposphere, Planetary Boundary Layer, Overstory Canopy, Understory, Surface Litter, Organic Duff, Mineral Soil); custom GLSL volumetric flames, curling smoke plumes, wind streaks, and 3D flux arrows.
 - **HUD & Panels**: All panels (Header Pill, Science & Chart HUD, Voice Drawer, Control Deck, Camera Detector, Stratum Callout) support minimize/collapse and full-screen Zen Mode.
 - See [docs/CONCEPT.md](docs/CONCEPT.md).
 
@@ -137,9 +139,10 @@ Suggested sources (site-mean over the burnt polygon, per phase window): GPP — 
 
 - Real data loaders (GEE/ERA5 export script) and verified Bandhavgarh/Chamba events.
 - Terrain from DEM (SRTM) and burned-area footprint.
-- Demo GIF for README/LinkedIn.
+- [x] README screenshot added (`docs/screenshot.png`)
+- Demo GIF / short screen recording for LinkedIn.
 - [x] GitHub Pages deployed at https://murushyam.github.io/wildfire-flux-explorer/
 - [x] Android installable APK build pipeline verified
 - Performance tuning on low-end GPUs.
 
-License: MIT (see LICENSE). Private for now.
+License: MIT (see LICENSE).
