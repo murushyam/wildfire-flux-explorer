@@ -1,1 +1,1 @@
-$(cat /tmp/android_main.js)
+PLACEHOLDER_MAIN

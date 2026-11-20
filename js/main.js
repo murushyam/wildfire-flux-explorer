@@ -1,1 +1,1 @@
-$(cat /tmp/main.js)
+PLACEHOLDER_MAIN
