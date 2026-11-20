@@ -1,6 +1,7 @@
 {
   "_notice": "ALL NUMBERS BELOW ARE EXAMPLE PLACEHOLDERS for UI development. They are NOT observations or published results. Replace with real MODIS / ERA5 / CAMS values (see README > Data schema).",
   "is_example": true,
+  "version": "2026-11-20-egu-removed",
   "variables": {
     "GPP": {
       "label": "Gross Primary Productivity",
