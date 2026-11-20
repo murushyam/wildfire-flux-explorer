@@ -1,1 +1,127 @@
-$(cat /tmp/sites_updated.json)
+{
+  "_notice": "ALL NUMBERS BELOW ARE EXAMPLE PLACEHOLDERS for UI development. They are NOT observations or published results. Replace with real MODIS / ERA5 / CAMS values (see README > Data schema).",
+  "is_example": true,
+  "variables": {
+    "GPP": {
+      "label": "Gross Primary Productivity",
+      "unit": "gC m⁻² d⁻¹",
+      "direction": "down",
+      "color": "#76ff03"
+    },
+    "ET": {
+      "label": "Evapotranspiration",
+      "unit": "mm d⁻¹",
+      "direction": "up",
+      "color": "#4fc3f7"
+    },
+    "LH": {
+      "label": "Latent heat flux",
+      "unit": "W m⁻²",
+      "direction": "up",
+      "color": "#3fa7ff"
+    },
+    "SH": {
+      "label": "Sensible heat flux",
+      "unit": "W m⁻²",
+      "direction": "up",
+      "color": "#ffd23f"
+    },
+    "VPD": {
+      "label": "Vapour pressure deficit",
+      "unit": "kPa",
+      "direction": "none",
+      "color": "#ff8c42"
+    },
+    "AOD": {
+      "label": "Aerosol optical depth (550 nm)",
+      "unit": "—",
+      "direction": "none",
+      "color": "#bbbbbb"
+    }
+  },
+  "phases": ["pre", "during", "post"],
+  "sites": [
+    {
+      "id": "similipal",
+      "name": "Similipal Biosphere Reserve, Odisha",
+      "lat": 21.9,
+      "lon": 86.3,
+      "event": "Similipal wildfire, March–April 2021 (analysed 25–29 April 2021 event)",
+      "relief": 0.8,
+      "forest_density": 0.9,
+      "values": {
+        "pre": {"GPP": 5, "ET": 3, "LH": 90, "SH": 60, "VPD": 2, "AOD": 0.4},
+        "during": {"GPP": 3, "ET": 2, "LH": 60, "SH": 100, "VPD": 4, "AOD": 1.2},
+        "post": {"GPP": 4, "ET": 2.5, "LH": 75, "SH": 75, "VPD": 3, "AOD": 0.6}
+      },
+      "source": "EXAMPLE placeholder values — not observations",
+      "published_findings": [
+        {
+          "text": "Fire vs non-fire: SH ↑ ~32.7 W m⁻² (peak ~145 W m⁻²); LH ↓ ~33%; net solar radiation ↑ ~58%; LST ↑ ~5 °C; VPD peak ~5.1 kPa; ET ↓ 53.3% (pre→post); AOD >3×.",
+          "citation": "Sunder et al. (2025). Impacts of wildfire over land and atmosphere in Similipal Biosphere Reserve, Odisha, India. Physics and Chemistry of the Earth, 141, 104177.",
+          "doi": "10.1016/j.pce.2025.104177"
+        },
+        {
+          "text": "March 2021 episode: AOD +56.21%, PM₂.₅ +~12 µg m⁻³, burnt area ~674 km² (~18.8%), ~4500 fire events, CO₂ ~0.41 Tg yr⁻¹.",
+          "citation": "Forest Fire Induced Air Pollution over Eastern India during March 2021. Aerosol and Air Quality Research (2022).",
+          "doi": ""
+        },
+        {
+          "text": "Multi-year Similipal fires (2004–2021): GPP and ET decline during fire and recover post-fire.",
+          "citation": "Sunder et al. (2024). Assessment of Wildfire-Induced Changes in Energy Fluxes and Environmental Variables: Similipal. EGU24-106.",
+          "doi": "10.5194/egusphere-egu24-106"
+        }
+      ],
+      "burn_zone": {
+        "x": 1.5,
+        "z": -1,
+        "r": 5,
+        "note": "EXAMPLE scene-units footprint for visual only — not a mapped burnt area"
+      }
+    },
+    {
+      "id": "bandhavgarh",
+      "name": "Bandhavgarh, Madhya Pradesh",
+      "lat": 23.7,
+      "lon": 81.0,
+      "event": "example event",
+      "relief": 0.5,
+      "forest_density": 0.7,
+      "values": {
+        "pre": {"GPP": 4, "ET": 2.5, "LH": 80, "SH": 70, "VPD": 2.5, "AOD": 0.35},
+        "during": {"GPP": 2.5, "ET": 1.8, "LH": 55, "SH": 105, "VPD": 4.2, "AOD": 0.9},
+        "post": {"GPP": 3.5, "ET": 2.2, "LH": 70, "SH": 80, "VPD": 3.2, "AOD": 0.5}
+      },
+      "source": "EXAMPLE placeholder values — not observations",
+      "published_findings": [],
+      "burn_zone": {
+        "x": -2,
+        "z": 2,
+        "r": 4,
+        "note": "EXAMPLE scene-units footprint for visual only — not a mapped burnt area"
+      }
+    },
+    {
+      "id": "chamba",
+      "name": "Chamba, Himachal Pradesh",
+      "lat": 32.55,
+      "lon": 76.13,
+      "event": "example event",
+      "relief": 1.4,
+      "forest_density": 0.6,
+      "values": {
+        "pre": {"GPP": 3.5, "ET": 2, "LH": 70, "SH": 55, "VPD": 1.5, "AOD": 0.25},
+        "during": {"GPP": 2, "ET": 1.4, "LH": 45, "SH": 90, "VPD": 3, "AOD": 0.8},
+        "post": {"GPP": 3, "ET": 1.7, "LH": 60, "SH": 65, "VPD": 2.2, "AOD": 0.4}
+      },
+      "source": "EXAMPLE placeholder values — not observations",
+      "published_findings": [],
+      "burn_zone": {
+        "x": 2,
+        "z": 3,
+        "r": 3.5,
+        "note": "EXAMPLE scene-units footprint for visual only — not a mapped burnt area"
+      }
+    }
+  ]
+}
