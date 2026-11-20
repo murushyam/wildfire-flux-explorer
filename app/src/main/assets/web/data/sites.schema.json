@@ -117,6 +117,33 @@
                 "type": "string"
               }
             }
+          },
+          "published_findings": {
+            "type": "array",
+            "description": "Cited published findings shown in the Science HUD.",
+            "items": {
+              "type": "object",
+              "required": [
+                "text"
+              ],
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "citation": {
+                  "type": "string",
+                  "description": "Bibliographic citation (Sunder et al. style)"
+                },
+                "source": {
+                  "type": "string",
+                  "description": "Legacy citation field"
+                },
+                "doi": {
+                  "type": "string",
+                  "description": "DOI identifier such as 10.1016/j.pce.2025.104177; may be empty"
+                }
+              }
+            }
           }
         }
       }
